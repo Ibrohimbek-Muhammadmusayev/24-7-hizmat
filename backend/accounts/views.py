@@ -1,0 +1,258 @@
+from rest_framework import views, status, permissions, generics
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.contrib.auth import authenticate
+from django.db import models
+from .models import User, UserFeedback, WorkerPortfolio, WorkerReview
+from .serializers import (
+    UserSerializer, 
+    LoginSerializer, 
+    ToggleOnlineSerializer, 
+    UpdateFCMTokenSerializer, 
+    RegisterWorkerSerializer,
+    UserFeedbackSerializer,
+    WorkerPortfolioSerializer,
+    WorkerReviewSerializer
+)
+from locations.models import WorkerLocation
+
+class LoginView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        if serializer.is_valid():
+            username = serializer.validated_data['username']
+            password = serializer.validated_data['password']
+            user = authenticate(username=username, password=password)
+            if user:
+                refresh = RefreshToken.for_user(user)
+                return Response({
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                    'user': UserSerializer(user).data
+                })
+            return Response({'error': 'Login yoki parol noto\'g\'ri'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ChangeAdminCredentialsView(views.APIView):
+    """
+    Dashboard settings: Allows logged in user (or admin) to update their username and password.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        current_username = request.data.get('current_username')
+        new_username = request.data.get('new_username')
+        current_password = request.data.get('current_password')
+        new_password = request.data.get('new_password')
+        confirm_password = request.data.get('confirm_password')
+
+        user = None
+        if user_id:
+            user = User.objects.filter(id=user_id).first()
+        elif current_username:
+            user = User.objects.filter(username=current_username).first()
+        elif request.user.is_authenticated:
+            user = request.user
+
+        if not user:
+            return Response({'error': "Foydalanuvchi hisobi topilmadi!"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Agar joriy parol tekshirishi so'ralgan bo'lsa
+        if current_password:
+            if not user.check_password(current_password):
+                return Response({'error': "Joriy (eski) parol noto'g'ri kiritildi!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Yangi login tekshiruvi
+        if new_username and new_username.strip() and new_username.strip() != user.username:
+            clean_username = new_username.strip()
+            if User.objects.filter(username=clean_username).exclude(id=user.id).exists():
+                return Response({'error': f"'{clean_username}' nomli login allaqachon mavjud! Boshqa login tanlang."}, status=status.HTTP_400_BAD_REQUEST)
+            user.username = clean_username
+
+        # Yangi parol tekshiruvi
+        if new_password:
+            if confirm_password and new_password != confirm_password:
+                return Response({'error': "Yangi parollar bir-biriga mos kelmadi!"}, status=status.HTTP_400_BAD_REQUEST)
+            if len(new_password) < 4:
+                return Response({'error': "Parol kamida 4 ta belgidan iborat bo'lishi kerak!"}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(new_password)
+
+        user.save()
+
+        # Generate new JWT tokens so the session stays updated
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'message': "Hisob ma'lumotlari (login va parol) muvaffaqiyatli o'zgartirildi!",
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+        })
+
+class UserProfileView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+class ToggleOnlineView(views.APIView):
+    def post(self, request):
+        serializer = ToggleOnlineSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user.is_online = serializer.validated_data['is_online']
+            user.save()
+            return Response({'status': 'success', 'is_online': user.is_online})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UpdateFCMTokenView(views.APIView):
+    def post(self, request):
+        serializer = UpdateFCMTokenSerializer(data=request.data)
+        if serializer.is_valid():
+            user = request.user
+            user.fcm_token = serializer.validated_data['fcm_token']
+            user.save()
+            return Response({'status': 'success'})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class WorkerListView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.filter(role=User.Role.WORKER).prefetch_related(
+            'selected_positions', 'portfolio_items', 'received_reviews'
+        ).select_related('region', 'category', 'position').order_by('-id')
+        
+        category_id = self.request.query_params.get('category_id')
+        region_id = self.request.query_params.get('region_id')
+        district = self.request.query_params.get('district')
+        search = self.request.query_params.get('search')
+        
+        if category_id:
+            queryset = queryset.filter(models.Q(category_id=category_id) | models.Q(selected_positions__category_id=category_id)).distinct()
+        if region_id:
+            queryset = queryset.filter(region_id=region_id)
+        if district:
+            queryset = queryset.filter(district__icontains=district)
+        if search:
+            queryset = queryset.filter(
+                models.Q(first_name__icontains=search) |
+                models.Q(last_name__icontains=search) |
+                models.Q(username__icontains=search) |
+                models.Q(phone_number__icontains=search) |
+                models.Q(specialty__icontains=search)
+            )
+        return queryset
+
+class WorkerDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserSerializer
+    queryset = User.objects.filter(role=User.Role.WORKER)
+
+class RegisterWorkerView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RegisterWorkerSerializer
+
+    def perform_create(self, serializer):
+        worker = serializer.save()
+        # Initialize default location for new worker
+        WorkerLocation.objects.get_or_create(
+            worker=worker,
+            defaults={'latitude': 41.311081, 'longitude': 69.240562, 'heading': 0.0}
+        )
+
+class UserListView(generics.ListCreateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        queryset = User.objects.all().prefetch_related('selected_positions').select_related('region', 'category', 'position').order_by('-id')
+        role = self.request.query_params.get('role', None)
+        search = self.request.query_params.get('search', None)
+        has_telegram = self.request.query_params.get('has_telegram', None)
+        bot_filter = self.request.query_params.get('bot_filter', None) # 'CLIENT', 'WORKER', 'BOTH'
+
+        if role:
+            queryset = queryset.filter(role=role)
+        if has_telegram == 'true':
+            queryset = queryset.filter(telegram_id__isnull=False)
+        if bot_filter == 'CLIENT':
+            queryset = queryset.filter(started_client_bot=True)
+        elif bot_filter == 'WORKER':
+            queryset = queryset.filter(started_worker_bot=True)
+        elif bot_filter == 'BOTH':
+            queryset = queryset.filter(started_client_bot=True, started_worker_bot=True)
+
+        if search:
+            queryset = queryset.filter(
+                models.Q(first_name__icontains=search) |
+                models.Q(last_name__icontains=search) |
+                models.Q(username__icontains=search) |
+                models.Q(phone_number__icontains=search) |
+                models.Q(telegram_id__icontains=search) |
+                models.Q(specialty__icontains=search)
+            )
+        return queryset
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        if not user.username:
+            user.username = f"user_{user.id}"
+            user.save()
+
+class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserSerializer
+    queryset = User.objects.all().prefetch_related('selected_positions').select_related('region', 'category', 'position')
+
+class UpdateUserCreditsView(views.APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, user_id):
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+
+        credits = request.data.get('job_credits', None)
+        delta = request.data.get('add_credits', None)
+
+        if credits is not None:
+            try:
+                user.job_credits = max(0, int(credits))
+            except ValueError:
+                return Response({'error': 'Kredit soni butun son bo\'lishi kerak'}, status=status.HTTP_400_BAD_REQUEST)
+        elif delta is not None:
+            try:
+                user.job_credits = max(0, user.job_credits + int(delta))
+            except ValueError:
+                return Response({'error': 'Kredit miqdori butun son bo\'lishi kerak'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({'error': 'job_credits yoki add_credits parametri kiritilmadi'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.save()
+        return Response({
+            'message': f'{user.first_name or user.username} uchun kreditlar yangilandi: {user.job_credits} ta',
+            'user': UserSerializer(user).data
+        })
+
+class UserFeedbackListView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserFeedbackSerializer
+
+    def get_queryset(self):
+        queryset = UserFeedback.objects.select_related('user').all().order_by('-created_at')
+        reviewed = self.request.query_params.get('is_reviewed')
+        if reviewed is not None:
+            queryset = queryset.filter(is_reviewed=(reviewed.lower() == 'true'))
+        return queryset
+
+class UserFeedbackDetailView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = UserFeedbackSerializer
+    queryset = UserFeedback.objects.all()
+
+
+

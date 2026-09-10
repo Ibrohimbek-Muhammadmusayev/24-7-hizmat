@@ -1,0 +1,32 @@
+# Python & Django
+__pycache__/
+*.py[cod]
+*.class
+*.log
+local_settings.py
+staticfiles/
+media/
+venv/
+.venv/
+env/
+.env
+
+# Node & Dashboard
+node_modules/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Mobile app (excluded from backend repo)
+mobile/
+flutter_app/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+.gemini/
