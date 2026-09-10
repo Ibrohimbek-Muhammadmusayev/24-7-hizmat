@@ -140,6 +140,18 @@ def toggle_worker_online(tg_id):
 def update_worker_location_db(tg_id, lat, lng):
     user = User.objects.filter(telegram_id=tg_id).first()
     if user:
+        from locations.models import reverse_geocode, Region
+        geo_res = reverse_geocode(lat, lng)
+        region_id = geo_res.get('region_id')
+        region_obj = Region.objects.filter(id=region_id).first() if region_id else None
+        
+        user.latitude = lat
+        user.longitude = lng
+        user.district = geo_res.get('district', '') or geo_res.get('road', '')
+        if region_obj:
+            user.region = region_obj
+        user.save(update_fields=['latitude', 'longitude', 'district', 'region'] if region_obj else ['latitude', 'longitude', 'district'])
+        
         loc, created = WorkerLocation.objects.get_or_create(
             worker=user,
             defaults={'latitude': lat, 'longitude': lng, 'heading': 0.0}

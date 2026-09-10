@@ -53,21 +53,39 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# ISO3166-2-lvl4 mapping and comprehensive keywords
+ISO_REGION_MAP = {
+    'UZ-TK': 1,   # Toshkent shahri
+    'UZ-TO': 2,   # Toshkent viloyati
+    'UZ-AN': 3,   # Andijon viloyati
+    'UZ-BU': 4,   # Buxoro viloyati
+    'UZ-FA': 5,   # Farg'ona viloyati
+    'UZ-JI': 6,   # Jizzax viloyati
+    'UZ-XO': 7,   # Xorazm viloyati
+    'UZ-NG': 8,   # Namangan viloyati
+    'UZ-NW': 9,   # Navoiy viloyati
+    'UZ-QA': 10,  # Qashqadaryo viloyati
+    'UZ-QR': 11,  # Qoraqalpog'iston Respublikasi
+    'UZ-SA': 12,  # Samarqand viloyati
+    'UZ-SI': 13,  # Sirdaryo viloyati
+    'UZ-SU': 14,  # Surxondaryo viloyati
+}
+
 REGION_KEYWORDS = {
-    'toshkent shahri': ['toshkent shahri', 'tashkent city', 'город ташкент', 'tashkent'],
-    'toshkent viloyati': ['toshkent viloyati', 'tashkent region', 'ташкентская область'],
-    'andijon viloyati': ['andijon', 'andijan', 'андижан'],
-    'buxoro viloyati': ['buxoro', 'bukhara', 'бухара'],
-    'farg\'ona viloyati': ['farg\'ona', 'fergana', 'фергана', 'fargona'],
-    'jizzax viloyati': ['jizzax', 'jizzakh', 'джизак'],
-    'xorazm viloyati': ['xorazm', 'khorezm', 'хорезм', 'urganch', 'urgench'],
-    'namangan viloyati': ['namangan', 'наманган'],
-    'navoiy viloyati': ['navoiy', 'navoi', 'навои'],
-    'qashqadaryo viloyati': ['qashqadaryo', 'kashkadarya', 'кашкадарья', 'qarshi', 'karshi'],
-    'qoraqalpog\'iston respublikasi': ['qoraqalpog\'iston', 'karakalpakstan', 'каракалпакстан', 'nukus', 'nukis'],
-    'samarqand viloyati': ['samarqand', 'samarkand', 'самарканд'],
-    'sirdaryo viloyati': ['sirdaryo', 'sirdaryo viloyati', 'syrdarya', 'сырдарья', 'guliston', 'gulistan'],
-    'surxondaryo viloyati': ['surxondaryo', 'surkhandarya', 'сурхандарья', 'termiz', 'termez'],
+    1: ['toshkent shahri', 'tashkent city', 'город ташкент', 'toshkent shahar', 'tashkent'],
+    2: ['toshkent viloyati', 'tashkent region', 'ташкентская область', 'chirchiq', 'angren', 'olmaliq', 'bekobod', 'yangiyo‘l', 'yangiyul', 'parkent'],
+    3: ['andijon', 'andijan', 'андижан', 'asaka', 'xonobod', 'shahrixon'],
+    4: ['buxoro', 'bukhara', 'бухара', 'kogon', 'g‘ijduvon', 'gijduvon'],
+    5: ['farg‘ona', 'farg\'ona', 'fergana', 'фергана', 'fargona', 'qo‘qon', 'qoqon', 'quva', 'marg‘ilon', 'margilon', 'rishton'],
+    6: ['jizzax', 'jizzakh', 'джизак', 'zomin', 'g‘allaorol', 'do‘stlik'],
+    7: ['xorazm', 'khorezm', 'хорезм', 'urganch', 'urgench', 'xiva', 'khiva'],
+    8: ['namangan', 'наманган', 'chust', 'pop', 'kosonsoy', 'uchqo‘rg‘on'],
+    9: ['navoiy', 'navoi', 'навои', 'zarafshon', 'karmana', 'uchquduq'],
+    10: ['qashqadaryo', 'kashkadarya', 'кашкадарья', 'qarshi', 'karshi', 'shahrisabz', 'shaxrisabz', 'koson', 'kitob', 'muborak'],
+    11: ['qoraqalpog‘iston', 'qoraqalpog\'iston', 'karakalpakstan', 'каракалпакстан', 'nukus', 'nukis', 'qo‘ng‘irot', 'xo‘jayli'],
+    12: ['samarqand', 'samarkand', 'самарканд', 'kattaqo‘rg‘on', 'urgut', 'pastdarg‘om'],
+    13: ['sirdaryo', 'syrdarya', 'сырдарья', 'guliston', 'gulistan', 'yangiyer', 'shirin', 'boyovut'],
+    14: ['surxondaryo', 'surkhandarya', 'сурхандарья', 'termiz', 'termez', 'denov', 'sherobod', 'boysun'],
 }
 
 def reverse_geocode(lat: float, lon: float):
@@ -76,41 +94,74 @@ def reverse_geocode(lat: float, lon: float):
     """
     try:
         url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&accept-language=uz"
-        headers = {'User-Agent': 'FullXizmatBot/2.0 (contact@fullxizmat.uz)'}
+        headers = {'User-Agent': 'Ishtop24Platform/2.0 (admin@ishtop24.uz)'}
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=4) as response:
+        with urllib.request.urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode('utf-8'))
             address = data.get('address', {})
             
-            raw_state = address.get('state', '') or address.get('region', '') or address.get('city', '')
-            district = address.get('county', '') or address.get('city_district', '') or address.get('suburb', '') or address.get('district', '') or address.get('town', '') or address.get('village', '') or address.get('city', '')
-            road = address.get('road', '') or address.get('neighbourhood', '') or address.get('suburb', '')
-            
-            matched_region_name = None
-            search_str = f"{raw_state} {district} {address.get('city', '')}".lower()
-            
-            for reg_canonical, keywords in REGION_KEYWORDS.items():
-                for kw in keywords:
-                    if kw in search_str:
-                        matched_region_name = reg_canonical
-                        break
-                if matched_region_name:
+            iso_code = address.get('ISO3166-2-lvl4', '')
+            raw_state = address.get('state', '') or address.get('region', '')
+            city = address.get('city', '') or address.get('town', '') or address.get('village', '')
+            county = address.get('county', '')
+            district_key = address.get('city_district', '') or address.get('district', '') or address.get('suburb', '')
+            road = address.get('road', '') or address.get('neighbourhood', '')
+
+            # 1. District / Tuman aniqlash
+            # County, city_district, suburb yoki city lardan birini eng aniq tuman sifatida olamiz
+            district = ""
+            for candidate in [county, district_key, city, address.get('suburb'), address.get('neighbourhood')]:
+                if candidate and candidate.strip():
+                    district = candidate.strip()
                     break
+
+            # 2. Region ID aniqlash
+            matched_region_id = None
+            if iso_code and iso_code in ISO_REGION_MAP:
+                matched_region_id = ISO_REGION_MAP[iso_code]
             
+            # Agar ISO code bo'lmasa yoki aniqlanmasa, matnli qidiruv
+            if not matched_region_id:
+                full_text = f"{raw_state} {city} {county} {district_key} {data.get('display_name', '')}".lower()
+                # Maxsus: Toshkent viloyati vs Toshkent shahri
+                if 'toshkent viloyati' in full_text or 'ташкентская область' in full_text:
+                    matched_region_id = 2
+                elif 'toshkent' in full_text or 'tashkent' in full_text:
+                    matched_region_id = 1
+                else:
+                    for reg_id, keywords in REGION_KEYWORDS.items():
+                        if any(kw in full_text for kw in keywords):
+                            matched_region_id = reg_id
+                            break
+
+            # Region obyektini olish
+            region_obj = None
+            if matched_region_id:
+                region_obj = Region.objects.filter(id=matched_region_id).first()
+            if not region_obj and raw_state:
+                region_obj = Region.objects.filter(name_uz__icontains=raw_state[:6]).first()
+
+            region_name = region_obj.name_uz if region_obj else (raw_state or "O'zbekiston")
+
             return {
                 'raw_state': raw_state,
-                'region_name': matched_region_name or raw_state,
-                'district': district,
+                'region_id': region_obj.id if region_obj else None,
+                'region_name': region_name,
+                'district': district or road,
                 'road': road,
                 'display_name': data.get('display_name', '')
             }
     except Exception as e:
         logger.error(f"Reverse geocode error: {e}")
+        # Koordinata bo'yicha taxminiy hudud (Toshkent koordinatalari uchun default)
+        region_obj = None
+        if 41.15 <= lat <= 41.45 and 69.10 <= lon <= 69.45:
+            region_obj = Region.objects.filter(id=1).first() # Toshkent shahri
         return {
             'raw_state': '',
-            'region_name': '',
+            'region_id': region_obj.id if region_obj else None,
+            'region_name': region_obj.name_uz if region_obj else "O'zbekiston",
             'district': '',
             'road': '',
             'display_name': ''
         }
-

@@ -328,8 +328,11 @@ def create_user_feedback(telegram_id: int, text: str):
 @sync_to_async
 def save_location_from_gps(telegram_id: int, lat: float, lon: float):
     geo_res = reverse_geocode(lat, lon)
+    region_id = geo_res.get('region_id')
     region_obj = None
-    if geo_res.get('region_name'):
+    if region_id:
+        region_obj = Region.objects.filter(id=region_id).first()
+    if not region_obj and geo_res.get('region_name'):
         reg_search = geo_res['region_name'].lower()
         region_obj = Region.objects.filter(name_uz__icontains=reg_search).first()
         if not region_obj:
@@ -340,10 +343,21 @@ def save_location_from_gps(telegram_id: int, lat: float, lon: float):
     
     district = geo_res.get('district', '') or geo_res.get('road', '')
     if telegram_id:
-        update_data = {'latitude': lat, 'longitude': lon, 'district': district}
-        if region_obj:
-            update_data['region'] = region_obj
-        User.objects.filter(telegram_id=telegram_id).update(**update_data)
+        user = User.objects.filter(telegram_id=telegram_id).first()
+        if user:
+            user.latitude = lat
+            user.longitude = lon
+            user.district = district
+            if region_obj:
+                user.region = region_obj
+            user.save(update_fields=['latitude', 'longitude', 'district', 'region'] if region_obj else ['latitude', 'longitude', 'district'])
+            
+            # Shuningdek WorkerLocation modelini ham yangilaymiz
+            from locations.models import WorkerLocation
+            WorkerLocation.objects.update_or_create(
+                worker=user,
+                defaults={'latitude': lat, 'longitude': lon}
+            )
         
     return {
         'region_id': region_obj.id if region_obj else None,
@@ -2339,7 +2353,7 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     return await unhandled_callback_fallback(update, context)
 
 async def update_location_received_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    loc = update.message.location
+    loc = update.message.location if update.message else None
     if loc:
         lat, lon = loc.latitude, loc.longitude
         user_id = update.effective_user.id
@@ -2351,6 +2365,11 @@ async def update_location_received_handler(update: Update, context: ContextTypes
         success_msg = t('gps_updated_success', lang, region=profile['region'], district=profile['district'], gps=f"{lat:.5f}, {lon:.5f}")
         await update.message.reply_text(success_msg, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
         return await show_main_menu(update, context)
+    else:
+        text = update.message.text.strip() if update.message and update.message.text else ""
+        if "bekor" in text.lower() or "orqaga" in text.lower() or text.startswith("❌"):
+            await update.message.reply_text("Joylashuvni yangilash bekor qilindi.", reply_markup=ReplyKeyboardRemove())
+            return await show_main_menu(update, context)
         
     return await show_main_menu(update, context)
 
@@ -2415,7 +2434,7 @@ def build_bot_application(token: str) -> Application:
                 CallbackQueryHandler(main_menu_callback, pattern=".*"),
             ],
             STATE_UPDATE_LOCATION: [
-                MessageHandler(filters.LOCATION, update_location_received_handler),
+                MessageHandler(filters.LOCATION | (filters.TEXT & ~filters.COMMAND), update_location_received_handler),
                 CommandHandler('menu', show_main_menu),
                 CommandHandler('start', start_command),
             ],
