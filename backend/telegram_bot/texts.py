@@ -55,7 +55,7 @@ TEXTS = {
         'reg_success': "✅ Tabriklaymiz! Sizning anketangiz muvaffaqiyatli saqlandi va profilingiz faollashtirildi.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Asosiy menyu</b>\n\n👤 <b>Usta:</b> {name}\n📍 <b>Hudud:</b> {region} ({district})\n🛠 <b>Sohalar:</b> {positions}\n{status_badge}\n\nQuyidagi bo'limlardan birini tanlang:",
+        'main_menu': "🏠 <b>24/7-ishlar — Asosiy menyu</b>\n\n👤 <b>Usta:</b> {name}\n📍 <b>Hudud:</b> {location}\n🛠 <b>Sohalar:</b> {positions}\n{status_badge}\n\nQuyidagi bo'limlardan birini tanlang:",
         'status_active_badge': "🟢 <b>Holat:</b> Faol (Buyurtmalar qabul qilinmoqda)",
         'status_busy_badge': "🔴 <b>Holat:</b> Band (Yangi ishlar to'xtatilgan)",
         
@@ -271,7 +271,7 @@ TEXTS = {
         'reg_success': "✅ Табриклаймиз! Сизнинг анкетангиз муваффақиятли сақланди ва профилингиз фаоллаштирилди.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ишлар — Асосий меню</b>\n\n👤 <b>Уста:</b> {name}\n📍 <b>Ҳудуд:</b> {region} ({district})\n🛠 <b>Соҳалар:</b> {positions}\n{status_badge}\n\nҚуйидаги бўлимлардан бирини танланг:",
+        'main_menu': "🏠 <b>24/7-ишлар — Асосий меню</b>\n\n👤 <b>Уста:</b> {name}\n📍 <b>Ҳудуд:</b> {location}\n🛠 <b>Соҳалар:</b> {positions}\n{status_badge}\n\nҚуйидаги бўлимлардан бирини танланг:",
         'status_active_badge': "🟢 <b>Ҳолат:</b> Фаол (Буюртмалар қабул қилинмоқда)",
         'status_busy_badge': "🔴 <b>Ҳолат:</b> Банд (Янги ишлар тўхтатилган)",
         
@@ -473,7 +473,7 @@ TEXTS = {
         'reg_success': "✅ Поздравляем! Ваша анкета успешно сохранена.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Главное меню</b>\n\n👤 <b>Специалист:</b> {name}\n📍 <b>Регион:</b> {region} ({district})\n🛠 <b>Специальности:</b> {positions}\n{status_badge}\n\nВыберите нужный раздел:",
+        'main_menu': "🏠 <b>24/7-ishlar — Главное меню</b>\n\n👤 <b>Специалист:</b> {name}\n📍 <b>Регион:</b> {location}\n🛠 <b>Специальности:</b> {positions}\n{status_badge}\n\nВыберите нужный раздел:",
         'status_active_badge': "🟢 <b>Статус:</b> Активен (Заказы принимаются)",
         'status_busy_badge': "🔴 <b>Статус:</b> Занят (Новые заказы приостановлены)",
         
@@ -655,7 +655,7 @@ TEXTS = {
         'reg_success': "✅ Congratulations! Your profile has been activated.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Main Menu</b>\n\n👤 <b>Specialist:</b> {name}\n📍 <b>Location:</b> {region} ({district})\n🛠 <b>Specialties:</b> {positions}\n{status_badge}\n\nSelect an option below:",
+        'main_menu': "🏠 <b>24/7-ishlar — Main Menu</b>\n\n👤 <b>Specialist:</b> {name}\n📍 <b>Location:</b> {location}\n🛠 <b>Specialties:</b> {positions}\n{status_badge}\n\nSelect an option below:",
         'status_active_badge': "🟢 <b>Status:</b> Active (Ready for orders)",
         'status_busy_badge': "🔴 <b>Status:</b> Busy (Orders paused)",
         

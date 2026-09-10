@@ -1340,13 +1340,25 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
     
     reply_markup = InlineKeyboardMarkup(keyboard)
+    
+    # Hudud va tuman matnini chiroyli shakllantiramiz: masalan "Farg'ona viloyati, Quva tumani"
+    loc_str = "Tanlanmagan"
+    if profile:
+        reg = profile.get('region') or ''
+        dist = profile.get('district') or ''
+        if reg and reg != 'Tanlanmagan' and dist:
+            loc_str = f"{reg}, {dist}"
+        elif reg and reg != 'Tanlanmagan':
+            loc_str = reg
+        elif dist:
+            loc_str = dist
+            
     msg_text = t(
         'main_menu', 
         lang,
         name=profile['name'] if profile else 'Usta',
         positions=profile['positions'] if profile else 'Tanlanmagan',
-        region=profile['region'] if profile else 'Tanlanmagan',
-        district=profile['district'] if profile else '',
+        location=loc_str,
         status_badge=status_badge
     )
     
