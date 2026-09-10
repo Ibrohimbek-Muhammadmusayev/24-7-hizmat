@@ -10,7 +10,9 @@ import {
   Eye,
   EyeOff,
   Settings,
-  HelpCircle
+  HelpCircle,
+  Database,
+  Download
 } from 'lucide-react';
 import { changeAdminCredentials } from '../services/api';
 
@@ -341,6 +343,46 @@ export default function SettingsManager({ currentUser, onUserUpdated }) {
                 </span>
               </div>
             </div>
+          </div>
+
+          {/* Card: Ma'lumotlar bazasi zaxira nusxasini yuklab olish */}
+          <div className="card" style={{ 
+            padding: '1.75rem', 
+            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(59, 130, 246, 0.06))',
+            borderColor: 'rgba(16, 185, 129, 0.25)' 
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+              <Database size={20} color="var(--success)" />
+              <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                Ma'lumotlar Bazasi Zaxirasi (Backup)
+              </h4>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+              Barcha foydalanuvchilar, buyurtmalar, ustalar va tizim ma'lumotlarining to'liq va yangi nusxasini kompyuteringizga yuklab oling.
+            </p>
+
+            <a
+              href="/api/accounts/download-backup/"
+              download
+              className="btn"
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                backgroundColor: 'var(--success)',
+                borderColor: 'var(--success)',
+                color: '#fff',
+                fontWeight: 700,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                textDecoration: 'none',
+                boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+              }}
+            >
+              <Download size={18} />
+              Bazani Yuklab Olish (.sqlite3)
+            </a>
           </div>
 
           <div className="card" style={{ padding: '1.75rem' }}>

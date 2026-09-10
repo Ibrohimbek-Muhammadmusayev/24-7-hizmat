@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     LoginView, 
     ChangeAdminCredentialsView,
+    DownloadDatabaseBackupView,
     UserProfileView, 
     ToggleOnlineView, 
     UpdateFCMTokenView, 
@@ -18,6 +19,7 @@ from .views import (
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('change-credentials/', ChangeAdminCredentialsView.as_view(), name='change-credentials'),
+    path('download-backup/', DownloadDatabaseBackupView.as_view(), name='download-backup'),
     path('profile/', UserProfileView.as_view(), name='profile'),
     path('toggle-online/', ToggleOnlineView.as_view(), name='toggle-online'),
     path('fcm-token/', UpdateFCMTokenView.as_view(), name='fcm-token'),

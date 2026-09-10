@@ -91,6 +91,35 @@ class ChangeAdminCredentialsView(views.APIView):
             'refresh': str(refresh),
         })
 
+from django.http import FileResponse, Http404
+from django.conf import settings
+from datetime import datetime
+import os
+import shutil
+import tempfile
+
+class DownloadDatabaseBackupView(views.APIView):
+    """
+    Admin only: Downloads a live copy/backup of the SQLite database.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        db_path = settings.DATABASES['default']['NAME']
+        if not os.path.exists(db_path):
+            raise Http404("Ma'lumotlar bazasi fayli topilmadi!")
+
+        # Create a safe snapshot copy so active DB connections aren't locked
+        temp_dir = tempfile.gettempdir()
+        date_str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        backup_filename = f"db_backup_24_7_ishlar_{date_str}.sqlite3"
+        temp_backup_path = os.path.join(temp_dir, backup_filename)
+
+        shutil.copy2(db_path, temp_backup_path)
+
+        response = FileResponse(open(temp_backup_path, 'rb'), as_attachment=True, filename=backup_filename)
+        return response
+
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
 

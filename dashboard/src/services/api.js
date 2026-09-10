@@ -27,6 +27,7 @@ api.interceptors.request.use((config) => {
 
 export const loginUser = (username, password) => api.post('/accounts/login/', { username, password });
 export const changeAdminCredentials = (data) => api.post('/accounts/change-credentials/', data);
+export const downloadDatabaseBackupUrl = () => `${getBaseUrl()}/accounts/download-backup/`;
 
 // Categories & Positions
 export const fetchCategories = () => api.get('/categories/');
