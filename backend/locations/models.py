@@ -50,8 +50,16 @@ class WorkerLocation(models.Model):
 import urllib.request
 import json
 import logging
+import ssl
 
 logger = logging.getLogger(__name__)
+
+# SSL verification context (certifi yoki unverified fallback)
+try:
+    import certifi
+    ssl_context = ssl.create_default_context(cafile=certifi.where())
+except Exception:
+    ssl_context = ssl._create_unverified_context()
 
 # ISO3166-2-lvl4 mapping and comprehensive keywords
 ISO_REGION_MAP = {
@@ -96,7 +104,7 @@ def reverse_geocode(lat: float, lon: float):
         url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}&accept-language=uz"
         headers = {'User-Agent': 'Ishtop24Platform/2.0 (admin@ishtop24.uz)'}
         req = urllib.request.Request(url, headers=headers)
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=6, context=ssl_context) as response:
             data = json.loads(response.read().decode('utf-8'))
             address = data.get('address', {})
             
