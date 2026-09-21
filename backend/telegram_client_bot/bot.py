@@ -447,6 +447,12 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     text = t('main_menu', lang, name=name, phone=phone, active_posts_count=active_count)
     
+    try:
+        worker_bot_url = await sync_to_async(BotConfig.get_worker_bot_link)()
+    except Exception as e:
+        logger.error(f"Error getting worker_bot_link: {e}")
+        worker_bot_url = "https://t.me/ish_24_7_bot?start=ref_client_bot"
+
     keyboard = [
         [InlineKeyboardButton(t('btn_menu_new_post', lang), callback_data="menu_new_post")],
         [
@@ -459,7 +465,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ],
         [
             InlineKeyboardButton(t('btn_menu_help', lang), callback_data="menu_help"),
-            InlineKeyboardButton(t('btn_menu_switch_bot', lang), url="https://t.me/ishlar_24_7_bot?start=ref_client_bot"),
+            InlineKeyboardButton(t('btn_menu_switch_bot', lang), url=worker_bot_url),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
