@@ -316,7 +316,7 @@ TEXTS = {
         'bot_error_msg': '⚠️ <b>Произошла ошибка в работе системы!</b>\n\nЧтобы перезапустить бота и продолжить, нажмите кнопку ниже или отправьте команду /start:',
         'bot_outdated_button_msg': '🔄 <b>Система обновлена / требуется перезапуск</b>\n\nВозможно, нажатая вами кнопка устарела. Нажмите кнопку ниже для перезапуска бота:',
         'bot_restarted_notification': '🔄 <b>Система успешно обновлена!</b>\n\nВ боте размещения вакансий добавлены новые возможности. Нажмите кнопку ниже, чтобы продолжить:',
-        'help_contact_msg': '📞 <b>Служба поддержки Full-Xizmat</b>\n\n☎️ Телефон: +998 (71) 200-00-00\n🤖 Онлайн-помощник: @fullxizmat_support\n⏰ Режим работы: 24/7 круглосуточно',
+        'help_contact_msg': '📞 <b>Служба поддержки {project_name}</b>\n\n☎️ Телефон: +998 (71) 200-00-00\n🤖 Онлайн-помощник: @fullxizmat_support\n⏰ Режим работы: 24/7 круглосуточно',
     },
     'en': {
         # 0. Auth & Kirish
@@ -417,17 +417,27 @@ TEXTS = {
         'bot_error_msg': '⚠️ <b>An unexpected system error occurred!</b>\n\nTo refresh and restart the bot, please tap the button below or send /start:',
         'bot_outdated_button_msg': '🔄 <b>System was updated / restart needed</b>\n\nThe button you clicked may be outdated. Tap below to restart:',
         'bot_restarted_notification': '🔄 <b>System has been updated successfully!</b>\n\nNew improvements are now available. Tap below to continue:',
-        'help_contact_msg': '📞 <b>Full-Xizmat Customer Support</b>\n\n☎️ Phone: +998 (71) 200-00-00\n🤖 Online Assistant: @fullxizmat_support\n⏰ Working hours: 24/7 non-stop',
+        'help_contact_msg': '📞 <b>{project_name} Customer Support</b>\n\n☎️ Phone: +998 (71) 200-00-00\n🤖 Online Assistant: @fullxizmat_support\n⏰ Working hours: 24/7 non-stop',
     }
 }
 
 def t(key, lang='uz', **kwargs):
     l_dict = TEXTS.get(lang, TEXTS['uz'])
     template = l_dict.get(key, TEXTS['uz'].get(key, key))
+    
+    if 'project_name' not in kwargs:
+        try:
+            from bot_control.models import BotConfig
+            kwargs['project_name'] = BotConfig.get_project_name()
+        except Exception:
+            kwargs['project_name'] = "24/7-ishlar"
+
     if kwargs:
         try:
             return template.format(**kwargs)
         except Exception:
+            for k, v in kwargs.items():
+                template = template.replace(f"{{{k}}}", str(v))
             return template
     return template
 

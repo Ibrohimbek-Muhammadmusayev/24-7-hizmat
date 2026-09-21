@@ -43,6 +43,7 @@ export default function BotControlPanel() {
     client_bot_token: '',
     is_running: false,
     pid: null,
+    project_name: '24/7-ishlar',
     welcome_text: '',
     about_text: '',
     call_center_phone: '',
@@ -68,6 +69,7 @@ export default function BotControlPanel() {
   const [notification, setNotification] = useState(null);
 
   const [cmsData, setCmsData] = useState({
+    project_name: '24/7-ishlar',
     welcome_text: '',
     about_text: '',
     call_center_phone: '+998 (71) 200-00-00',
@@ -106,6 +108,7 @@ export default function BotControlPanel() {
         }
 
         setCmsData({
+          project_name: res.data.project_name || '24/7-ishlar',
           welcome_text: res.data.welcome_text || '',
           about_text: res.data.about_text || '',
           call_center_phone: res.data.call_center_phone || '+998 (71) 200-00-00',
@@ -686,6 +689,24 @@ export default function BotControlPanel() {
           </p>
 
           <form onSubmit={handleSaveCMS} style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+            <div className="form-group">
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                <Sparkles size={15} color="#f59e0b" />
+                🏢 Loyiha & Brend Nomi (Platform Brand Name)
+              </label>
+              <input
+                type="text"
+                value={cmsData.project_name}
+                onChange={(e) => setCmsData({ ...cmsData, project_name: e.target.value })}
+                placeholder="24/7-ishlar"
+                className="form-input"
+                style={{ fontWeight: 600, fontSize: '0.95rem' }}
+              />
+              <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
+                💡 Bu nom butun tizim bo'ylab (Usta boti, Ish beruvchi boti, asosiy menyu, xabarnomalar va qo'llanmalarda) avtomatik aks etadi.
+              </span>
+            </div>
+
             <div className="form-group">
               <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <Phone size={14} color="#3b82f6" />

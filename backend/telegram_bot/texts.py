@@ -2,7 +2,7 @@ TEXTS = {
     'uz': {
         'choose_lang': "Assalomu alaykum! Iltimos, muloqot tilini tanlang:",
         'lang_selected': "🇺🇿 O'zbek tili (Lotin) tanlandi.",
-        'welcome_back': "Assalomu alaykum, <b>{name}</b>! 👋\n\n<b>24/7-ishlar</b> platformasiga xush kelibsiz!\nQuyidagi menyu orqali kerakli bo'limni tanlang:",
+        'welcome_back': "Assalomu alaykum, <b>{name}</b>! 👋\n\n<b>{project_name}</b> platformasiga xush kelibsiz!\nQuyidagi menyu orqali kerakli bo'limni tanlang:",
         
         # 0.1-Qadam: Rol
         'choose_role': "Quyidagi variantlardan birini tanlang:",
@@ -55,7 +55,7 @@ TEXTS = {
         'reg_success': "✅ Tabriklaymiz! Sizning anketangiz muvaffaqiyatli saqlandi va profilingiz faollashtirildi.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Asosiy menyu</b>\n\n👤 <b>Usta:</b> {name}\n📍 <b>Hudud:</b> {location}\n🛠 <b>Sohalar:</b> {positions}\n{status_badge}\n\nQuyidagi bo'limlardan birini tanlang:",
+        'main_menu': "🏠 <b>{project_name} — Asosiy menyu</b>\n\n👤 <b>Usta:</b> {name}\n📍 <b>Hudud:</b> {location}\n🛠 <b>Sohalar:</b> {positions}\n{status_badge}\n\nQuyidagi bo'limlardan birini tanlang:",
         'status_active_badge': "🟢 <b>Holat:</b> Faol (Buyurtmalar qabul qilinmoqda)",
         'status_busy_badge': "🔴 <b>Holat:</b> Band (Yangi ishlar to'xtatilgan)",
         
@@ -179,12 +179,12 @@ TEXTS = {
         'btn_write_admin': "👨‍💻 Administratorga yozish",
         'btn_guide': "📖 Foydalanish qo‘llanmasi",
         'guide_text': (
-            "📖 <b>24/7-ISHLAR BOTIDAN FOYDALANISH QO‘LLANMASI</b>\n\n"
+            "📖 <b>{project_name} BOTIDAN FOYDALANISH QO‘LLANMASI</b>\n\n"
             "Ushbu bot orqali siz o‘z sohangiz bo‘yicha yangi ish buyurtmalarini topishingiz, mijozlar bilan to‘g‘ridan-to‘g‘ri bog‘lanishingiz va shaxsiy profilingizni boshqarishingiz mumkin.\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "🔘 <b>ASOSIY BO‘LIMLAR VA ULARNING VAZIFASI:</b>\n\n"
             "1️⃣ <b>🔎 ISHLARNI KO‘RISH / QIDIRISH:</b>\n"
-            "• <b>🎯 Menga mos ishlar:</b> Siz ro‘yxatdan o‘tishda tanlagan soha, lavozimlar (10 tagacha) va yashash hududingizga mos eng so‘nggi buyurtmalar.\n"
+            "• <b>📋 Barcha ishlar:</b> Barcha faol buyurtmalar va ish e'lonlari ro'yxati.\n"
             "• <b>🔍 Kategoriya bo‘yicha:</b> Istalgan sohani tanlab, o‘sha sohadagi mavjud barcha e'lonlarni ko‘rish.\n"
             "• <b>🗺 Geografik joylashuv bo‘yicha:</b> O‘z tumaningiz, butun viloyat yoki GPS lokatsiyangizdan 5km, 10km, 25km radiusdagi ishlarni saralash.\n\n"
             "2️⃣ <b>👤 MENING PROFILIM (KABINET):</b>\n"
@@ -214,7 +214,7 @@ TEXTS = {
         'btn_back': "⬅️ Orqaga",
         'bot_error_msg': "⚠️ <b>Kechirasiz, tizimda nosozlik yuz berdi!</b>\n\nIltimos, botni qaytadan to'liq ishga tushirish uchun <b>/start</b> buyrug‘ini yuboring yoki quyidagi <b>[🏠 Bosh sahifaga qaytish]</b> tugmasini bosing. Agar bosh sahifaga qaytish yordam bermasa, /start buyrug'ini yozing.",
         'bot_outdated_button_msg': "🔄 <b>Tizim yangilandi / sessiya yangilanishi zarur</b>\n\nSiz bosgan amal eskirgan bo‘lishi mumkin. Davom etish uchun quyidagi <b>[🏠 Bosh sahifaga qaytish]</b> tugmasini bosing yoki <b>/start</b> buyrug‘ini yuboring:",
-        'bot_restarted_notification': "🚀 <b>24/7-ishlar boti qayta ishga tushirildi va yangilandi!</b>\n\nTizimda texnik yangilanishlar amalga oshirildi va barcha xizmatlar to'liq ish holatida.\n\nBotdan foydalanishni davom ettirish va tizimni yangilash uchun <b>/start</b> buyrug'ini bosing.",
+        'bot_restarted_notification': "🚀 <b>{project_name} boti qayta ishga tushirildi va yangilandi!</b>\n\nTizimda texnik yangilanishlar amalga oshirildi va barcha xizmatlar to'liq ish holatida.\n\nBotdan foydalanishni davom ettirish va tizimni yangilash uchun <b>/start</b> buyrug'ini bosing.",
     },
     'oz': {
         'choose_lang': "Ассалому алайкум! Илтимос, мулоқот тилини танланг:",
@@ -386,7 +386,7 @@ TEXTS = {
         'btn_write_admin': "👨‍💻 Администраторга ёзиш",
         'btn_guide': "📖 Фойдаланиш қўлланмаси",
         'guide_text': (
-            "📖 <b>24/7-ИШЛАР БОТИДАН ФОЙДАЛАНИШ ҚЎЛЛАНМАСИ</b>\n\n"
+            "📖 <b>{project_name} БОТИДАН ФОЙДАЛАНИШ ҚЎЛЛАНМАСИ</b>\n\n"
             "Ушбу бот орқали сиз ўз соҳангиз бўйича янги иш буюртмаларини топишингиз, мижозлар билан тўғридан-тўғри боғланишингиз ва шахсий профилингизни бошқаришингиз мумкин.\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "🔘 <b>АСОСИЙ БЎЛИМЛАР ВА УЛАРНИНГ ВАЗИФАСИ:</b>\n\n"
@@ -420,12 +420,12 @@ TEXTS = {
         'btn_back': "⬅️ Орқага",
         'bot_error_msg': "⚠️ <b>Кечирасиз, тизимда носозлик юз берди!</b>\n\nИлтимос, ботни қайта ишга тушириш учун қуйидаги <b>[🔄 Ботни қайта ишга тушириш (/start)]</b> тугмасини босинг ёки <b>/start</b> буйруғини юборинг. Агар носозлик жиддий бўлмаса, бош саҳифага қайтишингиз мумкин:",
         'bot_outdated_button_msg': "🔄 <b>Тизим янгиланди / сессия янгиланиши зарур</b>\n\nСиз босган тугма эскирган бўлиши мумкин. Ботни қайта ишга тушириш учун <b>/start</b> босинг ёки бош саҳифага қайтинг:",
-        'bot_restarted_notification': "🚀 <b>24/7-ишлар боти янгиланди!</b>\n\nТизимда янгиланишлар амалга оширилди ва барча хизматлар барқарор ишламоқда.\n\nБош саҳифага ўтиш учун қуйидаги тугмани босинг:",
+        'bot_restarted_notification': "🚀 <b>{project_name} боти янгиланди!</b>\n\nТизимда янгиланишлар амалга оширилди ва барча хизматлар барқарор ишламоқда.\n\nБош саҳифага ўтиш учун қуйидаги тугмани босинг:",
     },
     'ru': {
         'choose_lang': "Здравствуйте! Пожалуйста, выберите язык:",
         'lang_selected': "🇷🇺 Выбран русский язык.",
-        'welcome_back': "Здравствуйте, <b>{name}</b>! 👋\n\nДобро пожаловать в платформу <b>24/7-ishlar</b>!\nВыберите нужный раздел из меню ниже:",
+        'welcome_back': "Здравствуйте, <b>{name}</b>! 👋\n\nДобро пожаловать в платформу <b>{project_name}</b>!\nВыберите нужный раздел из меню ниже:",
         
         # 0.1-Qadam: Rol
         'choose_role': "Выберите один из вариантов:",
@@ -478,7 +478,7 @@ TEXTS = {
         'reg_success': "✅ Поздравляем! Ваша анкета успешно сохранена.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Главное меню</b>\n\n👤 <b>Специалист:</b> {name}\n📍 <b>Регион:</b> {location}\n🛠 <b>Специальности:</b> {positions}\n{status_badge}\n\nВыберите нужный раздел:",
+        'main_menu': "🏠 <b>{project_name} — Главное меню</b>\n\n👤 <b>Специалист:</b> {name}\n📍 <b>Регион:</b> {location}\n🛠 <b>Специальности:</b> {positions}\n{status_badge}\n\nВыберите нужный раздел:",
         'status_active_badge': "🟢 <b>Статус:</b> Активен (Заказы принимаются)",
         'status_busy_badge': "🔴 <b>Статус:</b> Занят (Новые заказы приостановлены)",
         
@@ -591,7 +591,7 @@ TEXTS = {
         'support_title': "📞 <b>ПОДДЕРЖКА И ПОМОЩЬ:</b>\n\n📞 <b>Колл-центр:</b> {phone}\n⏰ <b>Время работы:</b> 09:00 - 18:00",
         'btn_write_admin': "👨‍💻 Связаться с админом",
         'btn_guide': "📖 Инструкция",
-        'guide_text': "📖 <b>РУКОВОДСТВО ПО ИСПОЛЬЗОВАНИЮ 24/7-ISHLAR</b>",
+        'guide_text': "📖 <b>РУКОВОДСТВО ПО ИСПОЛЬЗОВАНИЮ {project_name}</b>",
         'btn_leave_feedback': "💬 Оставить отзыв / жалобу",
         'prompt_feedback': "✍️ Пожалуйста, напишите ваше сообщение:",
         'feedback_received': "✅ Спасибо! Сообщение отправлено администрации.",
@@ -603,12 +603,12 @@ TEXTS = {
         'btn_back': "⬅️ Назад",
         'bot_error_msg': "⚠️ <b>Извините, произошел сбой в системе!</b>\n\nПожалуйста, нажмите кнопку <b>[🔄 Перезапустить бота (/start)]</b> или отправьте команду <b>/start</b>. Если сбой незначительный, вы можете перейти на главную страницу:",
         'bot_outdated_button_msg': "🔄 <b>Система обновлена / требуется перезапуск</b>\n\nВозможно, нажатая вами кнопка устарела. Нажмите <b>/start</b> или вернитесь на главную страницу:",
-        'bot_restarted_notification': "🚀 <b>Бот 24/7-ishlar обновлен!</b>\n\nБыли установлены системные обновления, и все сервисы работают стабильно.\n\nНажмите кнопку ниже, чтобы перейти на главную страницу:",
+        'bot_restarted_notification': "🚀 <b>Бот {project_name} обновлен!</b>\n\nБыли установлены системные обновления, и все сервисы работают стабильно.\n\nНажмите кнопку ниже, чтобы перейти на главную страницу:",
     },
     'en': {
         'choose_lang': "Welcome! Please choose your preferred language:",
         'lang_selected': "🇬🇧 English language selected.",
-        'welcome_back': "Welcome, <b>{name}</b>! 👋\n\nWelcome back to <b>24/7-ishlar</b> platform!\nPlease select a section from the menu below:",
+        'welcome_back': "Welcome, <b>{name}</b>! 👋\n\nWelcome back to <b>{project_name}</b> platform!\nPlease select a section from the menu below:",
         
         # 0.1-Qadam: Rol
         'choose_role': "Please choose one of the options:",
@@ -661,7 +661,7 @@ TEXTS = {
         'reg_success': "✅ Congratulations! Your profile has been activated.",
 
         # ASOSIY MENYU TUZILISHI
-        'main_menu': "🏠 <b>24/7-ishlar — Main Menu</b>\n\n👤 <b>Specialist:</b> {name}\n📍 <b>Location:</b> {location}\n🛠 <b>Specialties:</b> {positions}\n{status_badge}\n\nSelect an option below:",
+        'main_menu': "🏠 <b>{project_name} — Main Menu</b>\n\n👤 <b>Specialist:</b> {name}\n📍 <b>Location:</b> {location}\n🛠 <b>Specialties:</b> {positions}\n{status_badge}\n\nSelect an option below:",
         'status_active_badge': "🟢 <b>Status:</b> Active (Ready for orders)",
         'status_busy_badge': "🔴 <b>Status:</b> Busy (Orders paused)",
         
@@ -776,7 +776,7 @@ TEXTS = {
         'btn_write_admin': "👨‍💻 Contact Admin",
         'btn_guide': "📖 User Guide",
         'guide_text': (
-            "📖 <b>USER GUIDE FOR 24/7-ISHLAR BOT</b>\n\n"
+            "📖 <b>USER GUIDE FOR {project_name} BOT</b>\n\n"
             "This bot helps you find relevant job orders and vacancies in your field, contact clients directly, and manage your master profile.\n\n"
             "━━━━━━━━━━━━━━━━━━━━\n"
             "🔘 <b>MAIN SECTIONS & THEIR FUNCTIONS:</b>\n\n"
@@ -810,16 +810,26 @@ TEXTS = {
         'btn_back': "⬅️ Back",
         'bot_error_msg': "⚠️ <b>Sorry, a system error occurred!</b>\n\nPlease click <b>[🔄 Restart Bot (/start)]</b> or send <b>/start</b> command. If the issue is minor, you can return to the main page:",
         'bot_outdated_button_msg': "🔄 <b>System was updated / restart needed</b>\n\nThe button you clicked may be outdated. Tap <b>/start</b> or return to the main page:",
-        'bot_restarted_notification': "🚀 <b>24/7-ishlar bot has been updated!</b>\n\nSystem updates have been applied and all services are running stably.\n\nClick the button below to go to the main page:",
+        'bot_restarted_notification': "🚀 <b>{project_name} bot has been updated!</b>\n\nSystem updates have been applied and all services are running stably.\n\nClick the button below to go to the main page:",
     }
 }
 
 def t(key: str, lang: str = 'uz', **kwargs) -> str:
     lang_dict = TEXTS.get(lang, TEXTS['uz'])
     text = lang_dict.get(key, TEXTS['uz'].get(key, key))
+    
+    if 'project_name' not in kwargs:
+        try:
+            from bot_control.models import BotConfig
+            kwargs['project_name'] = BotConfig.get_project_name()
+        except Exception:
+            kwargs['project_name'] = "24/7-ishlar"
+            
     if kwargs:
         try:
             return text.format(**kwargs)
-        except Exception as e:
+        except Exception:
+            for k, v in kwargs.items():
+                text = text.replace(f"{{{k}}}", str(v))
             return text
     return text

@@ -785,8 +785,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
+    try:
+        from bot_control.models import BotConfig
+        proj_name = await sync_to_async(BotConfig.get_project_name)()
+    except Exception:
+        proj_name = "24/7-ishlar"
+
     msg_text = (
-        "👋 Assalomu alaykum! <b>24/7-ishlar</b> rasmiy botiga xush kelibsiz.\n"
+        f"👋 Assalomu alaykum! <b>{proj_name}</b> rasmiy botiga xush kelibsiz.\n"
         "Iltimos, muloqot tilini tanlang:\n\n"
         "Пожалуйста, выберите язык:\n\n"
         "Please choose your language:"

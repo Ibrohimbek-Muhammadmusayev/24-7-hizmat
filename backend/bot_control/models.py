@@ -19,15 +19,18 @@ class BotConfig(models.Model):
     job_posting_cost_credits = models.IntegerField(default=1)  # 1 ta ish joylash narxi (kreditda)
     credit_price_sum = models.DecimalField(max_digits=12, decimal_places=2, default=10000.0) # 1 kredit narxi (so'mda)
     
+    # Platform & Brand Identity
+    project_name = models.CharField(max_length=150, blank=True, default="24/7-ishlar", verbose_name="Loyiha (Brend) nomi")
+
     # CMS & Dynamic Bot Content Settings
     welcome_text = models.TextField(
         blank=True, 
-        default="Assalomu alaykum, {first_name}! 👋\n\n24/7-ishlar usta va ishlar platformasining rasmiy botiga xush kelibsiz!\n\nQuyidagi menyu orqali kerakli bo'limni tanlang:"
+        default="Assalomu alaykum, {first_name}! 👋\n\n{project_name} usta va ishlar platformasining rasmiy botiga xush kelibsiz!\n\nQuyidagi menyu orqali kerakli bo'limni tanlang:"
     )
     welcome_image_url = models.CharField(max_length=500, blank=True, default='')
     about_text = models.TextField(
         blank=True, 
-        default="24/7-ishlar — O'zbekiston bo'ylab usta va mijozlarni tezkor bog'lovchi yagona professional xizmat platformasi.\n\nIshonchli ustalar, kafolatlangan xizmat va shaffof narxlar!"
+        default="{project_name} — O'zbekiston bo'ylab usta va mijozlarni tezkor bog'lovchi yagona professional xizmat platformasi.\n\nIshonchli ustalar, kafolatlangan xizmat va shaffof narxlar!"
     )
     call_center_phone = models.CharField(max_length=50, blank=True, default="+998 (71) 200-00-00")
     help_text = models.TextField(
@@ -66,6 +69,17 @@ class BotConfig(models.Model):
                 config.client_bot_token = default_token
                 config.save()
         return config
+
+    @classmethod
+    def get_project_name(cls):
+        """Loyiha / Brend nomini qaytaradi (masalan: 24/7-ishlar)"""
+        try:
+            config = cls.get_config()
+            if config.project_name and config.project_name.strip():
+                return config.project_name.strip()
+        except Exception:
+            pass
+        return "24/7-ishlar"
 
     @classmethod
     def get_client_bot_link(cls):
