@@ -321,6 +321,10 @@ class BotUpdateSettingsView(APIView):
             config.call_center_phone = request.data.get('call_center_phone', '').strip()
         if 'help_text' in request.data:
             config.help_text = request.data.get('help_text', '').strip()
+        if 'client_bot_url' in request.data:
+            config.client_bot_url = request.data.get('client_bot_url', '').strip()
+        if 'worker_bot_url' in request.data:
+            config.worker_bot_url = request.data.get('worker_bot_url', '').strip()
         if 'app_url' in request.data:
             config.app_url = request.data.get('app_url', '').strip()
         if 'app_url_enabled' in request.data:

@@ -21,6 +21,8 @@ class BotConfigSerializer(serializers.ModelSerializer):
             'about_text', 
             'call_center_phone', 
             'help_text', 
+            'client_bot_url',
+            'worker_bot_url',
             'app_url',
             'app_url_enabled',
             'updated_at'

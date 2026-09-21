@@ -856,7 +856,12 @@ async def role_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     lang = context.user_data.get('lang', 'uz')
     
     if role_type == 'client':
-        client_bot_url = "https://t.me/ish_joylash_boti?start=ref_worker_bot"
+        try:
+            client_bot_url = await sync_to_async(BotConfig.get_client_bot_link)()
+        except Exception as e:
+            logger.error(f"Error getting client_bot_link: {e}")
+            client_bot_url = "https://t.me/ishjoyla_bot?start=ref_worker_bot"
+
         keyboard = [
             [InlineKeyboardButton(t('btn_goto_client_bot', lang), url=client_bot_url)],
             [InlineKeyboardButton(t('btn_back', lang), callback_data="back_to_lang")]

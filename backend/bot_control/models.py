@@ -35,6 +35,10 @@ class BotConfig(models.Model):
         default="• Buyurtma Berish: Kerakli xizmat turini tanlab, oson buyurtma qoldiring.\n• Ish Qidirish: Ustalar yangi buyurtmalarni qabul qilishi mumkin.\n• Profilim: Ma'lumotlaringizni ko'ring va tahrirlang.\n• Buyurtmalarim: Buyurtmalar holatini kuzatib boring."
     )
 
+    # Custom Bot Links
+    client_bot_url = models.CharField(max_length=500, blank=True, default='', verbose_name="Ish beruvchi bot havolasi")
+    worker_bot_url = models.CharField(max_length=500, blank=True, default='', verbose_name="Usta bot havolasi")
+
     # Ilovaga kirish (Web App URL)
     app_url = models.CharField(max_length=500, blank=True, default='', verbose_name="Ilova havolasi (URL)")
     app_url_enabled = models.BooleanField(default=False, verbose_name="Ilovaga kirish tugmasi faolmi")
@@ -62,3 +66,64 @@ class BotConfig(models.Model):
                 config.client_bot_token = default_token
                 config.save()
         return config
+
+    @classmethod
+    def get_client_bot_link(cls):
+        """
+        Ish beruvchilar (Mijozlar) botiga o'tish havolasini qaytaradi.
+        1. Agar admin panelda client_bot_url ko'rsatilgan bo'lsa, o'shani oladi.
+        2. Aks holda client_bot_token orqali Telegram API'dan bot username'ini aniqlaydi.
+        3. Standart holatda fallback havola qaytaradi.
+        """
+        try:
+            config = cls.get_config()
+            if config.client_bot_url and config.client_bot_url.strip():
+                return config.client_bot_url.strip()
+
+            token = config.client_bot_token or getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+            if token and token != '7890123456:AAExampleBotTokenPlaceholder':
+                import json
+                import ssl
+                import urllib.request
+                try:
+                    ctx = ssl._create_unverified_context()
+                    req = urllib.request.Request(f"https://api.telegram.org/bot{str(token).strip()}/getMe", headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, context=ctx, timeout=3) as response:
+                        data = json.loads(response.read().decode('utf-8'))
+                        if data.get('ok') and data.get('result', {}).get('username'):
+                            uname = data['result']['username']
+                            return f"https://t.me/{uname}?start=ref_worker_bot"
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return "https://t.me/ishjoyla_bot?start=ref_worker_bot"
+
+    @classmethod
+    def get_worker_bot_link(cls):
+        """
+        Usta va ish izlovchilar botiga o'tish havolasini qaytaradi.
+        """
+        try:
+            config = cls.get_config()
+            if config.worker_bot_url and config.worker_bot_url.strip():
+                return config.worker_bot_url.strip()
+
+            token = config.worker_bot_token or config.token or getattr(settings, 'TELEGRAM_BOT_TOKEN', '')
+            if token and token != '7890123456:AAExampleBotTokenPlaceholder':
+                import json
+                import ssl
+                import urllib.request
+                try:
+                    ctx = ssl._create_unverified_context()
+                    req = urllib.request.Request(f"https://api.telegram.org/bot{str(token).strip()}/getMe", headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req, context=ctx, timeout=3) as response:
+                        data = json.loads(response.read().decode('utf-8'))
+                        if data.get('ok') and data.get('result', {}).get('username'):
+                            uname = data['result']['username']
+                            return f"https://t.me/{uname}?start=ref_client_bot"
+                except Exception:
+                    pass
+        except Exception:
+            pass
+        return "https://t.me/ish_24_7_bot?start=ref_client_bot"

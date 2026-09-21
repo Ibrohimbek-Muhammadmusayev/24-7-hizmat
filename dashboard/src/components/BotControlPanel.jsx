@@ -72,6 +72,8 @@ export default function BotControlPanel() {
     about_text: '',
     call_center_phone: '+998 (71) 200-00-00',
     help_text: '',
+    client_bot_url: '',
+    worker_bot_url: '',
     app_url: '',
     app_url_enabled: false
   });
@@ -108,6 +110,8 @@ export default function BotControlPanel() {
           about_text: res.data.about_text || '',
           call_center_phone: res.data.call_center_phone || '+998 (71) 200-00-00',
           help_text: res.data.help_text || '',
+          client_bot_url: res.data.client_bot_url || '',
+          worker_bot_url: res.data.worker_bot_url || '',
           app_url: res.data.app_url || '',
           app_url_enabled: Boolean(res.data.app_url_enabled)
         });
@@ -716,6 +720,64 @@ export default function BotControlPanel() {
                 className="form-textarea"
                 placeholder="Botdan foydalanish yo'riqnomasi..."
               />
+            </div>
+
+            {/* Botlararo O'tish Havolalari (Cross-Bot Redirection URLs) */}
+            <div style={{
+              marginTop: '0.5rem',
+              padding: '1.2rem',
+              borderRadius: '10px',
+              backgroundColor: 'var(--bg-hover)',
+              border: '1px solid var(--border-color)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              <div>
+                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                  <Bot size={16} color="#10b981" />
+                  🔗 Botlararo O'tish Havolalari (O'zaro bog'lanish)
+                </h4>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                  Usta botidagi "Ish beruvchi botiga o'tish" tugmasi havolasini boshqaring. Agar bo'sh qoldirilsa, tizim avtomatik tarzda kiritilgan bot tokeni orqali to'g'ri havolani shakllantiradi.
+                </p>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Briefcase size={14} color="#3b82f6" />
+                    Ish Beruvchi (Client) Boti Havolasi
+                  </label>
+                  <input
+                    type="url"
+                    value={cmsData.client_bot_url}
+                    onChange={(e) => setCmsData({ ...cmsData, client_bot_url: e.target.value })}
+                    placeholder={botStatus.client_bot_username ? `https://t.me/${botStatus.client_bot_username}?start=ref_worker_bot (Avto)` : "https://t.me/ishjoyla_bot?start=ref_worker_bot"}
+                    className="form-input"
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    {botStatus.client_bot_username ? `Avtomatik havola: https://t.me/${botStatus.client_bot_username}?start=ref_worker_bot` : "Standart: Ish joylash botiga yo'naltiradi"}
+                  </span>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <HardHat size={14} color="#10b981" />
+                    Ish Qidiruvchi (Usta) Boti Havolasi
+                  </label>
+                  <input
+                    type="url"
+                    value={cmsData.worker_bot_url}
+                    onChange={(e) => setCmsData({ ...cmsData, worker_bot_url: e.target.value })}
+                    placeholder={botStatus.worker_bot_username ? `https://t.me/${botStatus.worker_bot_username}?start=ref_client_bot (Avto)` : "https://t.me/ish_24_7_bot?start=ref_client_bot"}
+                    className="form-input"
+                  />
+                  <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '0.2rem', display: 'block' }}>
+                    {botStatus.worker_bot_username ? `Avtomatik havola: https://t.me/${botStatus.worker_bot_username}?start=ref_client_bot` : "Standart: Usta botiga yo'naltiradi"}
+                  </span>
+                </div>
+              </div>
             </div>
 
             {/* Ilovaga kirish (Web App URL) Boshqaruvi */}
