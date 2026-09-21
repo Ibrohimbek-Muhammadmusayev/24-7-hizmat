@@ -20,7 +20,7 @@ class BotConfig(models.Model):
     credit_price_sum = models.DecimalField(max_digits=12, decimal_places=2, default=10000.0) # 1 kredit narxi (so'mda)
     
     # Platform & Brand Identity
-    project_name = models.CharField(max_length=150, blank=True, default="24/7-ishlar", verbose_name="Loyiha (Brend) nomi")
+    project_name = models.CharField(max_length=150, blank=True, default="IshBazari", verbose_name="Loyiha (Brend) nomi")
 
     # CMS & Dynamic Bot Content Settings
     welcome_text = models.TextField(
@@ -72,14 +72,14 @@ class BotConfig(models.Model):
 
     @classmethod
     def get_project_name(cls):
-        """Loyiha / Brend nomini qaytaradi (masalan: 24/7-ishlar)"""
+        """Loyiha / Brend nomini qaytaradi (masalan: IshBazari)"""
         try:
             config = cls.get_config()
             if config.project_name and config.project_name.strip():
                 return config.project_name.strip()
         except Exception:
             pass
-        return "24/7-ishlar"
+        return "IshBazari"
 
     @classmethod
     def get_client_bot_link(cls):

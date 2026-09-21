@@ -44,7 +44,7 @@ export default function LoginModal({ onLoginSuccess }) {
             <ShieldCheck size={28} color="#3b82f6" />
           </div>
           <h2 style={{ fontSize: '1.35rem', fontWeight: 800, color: 'var(--text-main)', letterSpacing: '-0.02em' }}>
-            {localStorage.getItem('project_name') || '24/7-ishlar'} Boshqaruv Tizimi
+            {localStorage.getItem('project_name') || 'IshBazari'} Boshqaruv Tizimi
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.84rem', marginTop: '0.35rem' }}>
             Tizimga kirish uchun login va parolingizni kiriting

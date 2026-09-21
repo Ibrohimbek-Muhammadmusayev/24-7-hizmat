@@ -312,7 +312,7 @@ class BotUpdateSettingsView(APIView):
 
         # Platform Identity & CMS Texts
         if 'project_name' in request.data:
-            config.project_name = request.data.get('project_name', '').strip() or "24/7-ishlar"
+            config.project_name = request.data.get('project_name', '').strip() or "IshBazari"
         if 'welcome_text' in request.data:
             config.welcome_text = request.data.get('welcome_text', '').strip()
         if 'welcome_image_url' in request.data:

@@ -68,7 +68,7 @@ export default function Sidebar({ activeTab, setActiveTab, userRole, mobileOpen 
               <ShieldCheck size={20} color="#3b82f6" />
             </div>
             <div className="logo-text-group">
-              <span className="brand-title">{localStorage.getItem('project_name') || '24/7-ishlar'}</span>
+              <span className="brand-title">{localStorage.getItem('project_name') || 'IshBazari'}</span>
               <span className="brand-badge">ENTERPRISE</span>
             </div>
           </div>

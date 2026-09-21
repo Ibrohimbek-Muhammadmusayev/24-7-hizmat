@@ -43,7 +43,7 @@ export default function BotControlPanel() {
     client_bot_token: '',
     is_running: false,
     pid: null,
-    project_name: '24/7-ishlar',
+    project_name: 'IshBazari',
     welcome_text: '',
     about_text: '',
     call_center_phone: '',
@@ -69,7 +69,7 @@ export default function BotControlPanel() {
   const [notification, setNotification] = useState(null);
 
   const [cmsData, setCmsData] = useState({
-    project_name: '24/7-ishlar',
+    project_name: 'IshBazari',
     welcome_text: '',
     about_text: '',
     call_center_phone: '+998 (71) 200-00-00',
@@ -96,6 +96,9 @@ export default function BotControlPanel() {
       const res = await fetchBotStatus();
       if (res && res.data) {
         setBotStatus(res.data);
+        if (res.data.project_name) {
+          localStorage.setItem('project_name', res.data.project_name);
+        }
         
         const wTok = res.data.worker_bot_token || res.data.token || '';
         const cTok = res.data.client_bot_token || '';
@@ -108,7 +111,7 @@ export default function BotControlPanel() {
         }
 
         setCmsData({
-          project_name: res.data.project_name || '24/7-ishlar',
+          project_name: res.data.project_name || 'IshBazari',
           welcome_text: res.data.welcome_text || '',
           about_text: res.data.about_text || '',
           call_center_phone: res.data.call_center_phone || '+998 (71) 200-00-00',
@@ -398,7 +401,7 @@ export default function BotControlPanel() {
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                 <HardHat size={14} color="#10b981" />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
-                  1. 24/7-ishlar (Usta Boti)
+                  1. {botStatus.project_name || 'IshBazari'} (Usta Boti)
                 </span>
               </div>
               <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.35rem' }}>
@@ -524,7 +527,7 @@ export default function BotControlPanel() {
               <div className="form-group">
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600 }}>
                   <HardHat size={15} color="#10b981" />
-                  1. Usta & Ish Qidiruvchi Boti Tokeni (24/7-ishlar)
+                  1. Usta & Ish Qidiruvchi Boti Tokeni ({botStatus.project_name || 'IshBazari'})
                 </label>
                 <div style={{ position: 'relative', marginTop: '0.3rem' }}>
                   <input
@@ -625,7 +628,7 @@ export default function BotControlPanel() {
                 <li style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', color: 'var(--text-secondary)' }}>
                   <span style={{ color: '#10b981', fontWeight: 'bold' }}>1.</span>
                   <div>
-                    <strong style={{ color: '#10b981' }}>24/7-ishlar (Usta boti):</strong>
+                    <strong style={{ color: '#10b981' }}>{botStatus.project_name || 'IshBazari'} (Usta boti):</strong>
                     <div>Ustalarni ro'yxatga olish, portfolio, bandlik holati (Online/Band) va yangi e'lonlar haqida tezkor push-xabarlar qabul qilish.</div>
                   </div>
                 </li>
@@ -698,7 +701,7 @@ export default function BotControlPanel() {
                 type="text"
                 value={cmsData.project_name}
                 onChange={(e) => setCmsData({ ...cmsData, project_name: e.target.value })}
-                placeholder="24/7-ishlar"
+                placeholder="IshBazari"
                 className="form-input"
                 style={{ fontWeight: 600, fontSize: '0.95rem' }}
               />
@@ -881,7 +884,7 @@ export default function BotControlPanel() {
                 value={msgBotType}
                 onChange={(e) => setMsgBotType(e.target.value)}
               >
-                <option value="WORKER">👷 1. Usta Boti (24/7-ishlar)</option>
+                <option value="WORKER">👷 1. Usta Boti ({botStatus.project_name || 'IshBazari'})</option>
                 <option value="CLIENT">👔 2. Ish Joylash Boti (Client Bot)</option>
               </select>
             </div>

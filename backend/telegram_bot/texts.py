@@ -823,7 +823,7 @@ def t(key: str, lang: str = 'uz', **kwargs) -> str:
             from bot_control.models import BotConfig
             kwargs['project_name'] = BotConfig.get_project_name()
         except Exception:
-            kwargs['project_name'] = "24/7-ishlar"
+            kwargs['project_name'] = "IshBazari"
             
     if kwargs:
         try:

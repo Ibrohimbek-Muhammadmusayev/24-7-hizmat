@@ -789,7 +789,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         from bot_control.models import BotConfig
         proj_name = await sync_to_async(BotConfig.get_project_name)()
     except Exception:
-        proj_name = "24/7-ishlar"
+        proj_name = "IshBazari"
 
     msg_text = (
         f"👋 Assalomu alaykum! <b>{proj_name}</b> rasmiy botiga xush kelibsiz.\n"
