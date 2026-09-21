@@ -417,48 +417,15 @@ def fetch_jobs_feed(telegram_id: int, filter_type: str = 'matched', cat_id: int 
     if user:
         job_qs = job_qs.exclude(applications__worker=user)
     
-    user_pos_ids = []
-    if user:
-        user_pos_ids = list(user.selected_positions.values_list('id', flat=True))
-        if not user_pos_ids and user.position_id:
-            user_pos_ids = [user.position_id]
-
-    if filter_type == 'matched' and user:
-        # Match by category or position or region
-        job_filters = Q()
-        order_filters = Q()
-        
-        if user_pos_ids:
-            job_filters |= Q(position_id__in=user_pos_ids)
-        if user.category_id:
-            job_filters |= Q(category_id=user.category_id)
-            order_filters |= Q(category_id=user.category_id)
-        if user.region_id:
-            job_filters |= Q(region_id=user.region_id)
-            if user.region:
-                order_filters |= Q(address__icontains=user.region.name_uz)
-        elif user.district:
-            job_filters |= Q(district__icontains=user.district)
-            order_filters |= Q(address__icontains=user.district)
-            
-        if job_filters:
-            matched_jobs = job_qs.filter(job_filters)
-            # If matched jobs exist, narrow down, otherwise show all active
-            if matched_jobs.exists():
-                job_qs = matched_jobs
-        if order_filters:
-            matched_orders = order_qs.filter(order_filters)
-            if matched_orders.exists():
-                order_qs = matched_orders
-                
+    if filter_type in ['matched', 'all']:
+        # "Barcha ishlar" - barcha faol e'lonlar va buyurtmalar ko'rsatiladi
+        pass
     elif filter_type == 'category' and cat_id:
         job_qs = job_qs.filter(category_id=cat_id)
         order_qs = order_qs.filter(category_id=cat_id)
-        
     elif filter_type == 'district' and user and user.district:
         job_qs = job_qs.filter(Q(district__icontains=user.district) | Q(address__icontains=user.district))
         order_qs = order_qs.filter(address__icontains=user.district)
-        
     elif filter_type == 'region' and user and user.region:
         job_qs = job_qs.filter(Q(region_id=user.region_id) | Q(address__icontains=user.region.name_uz))
         order_qs = order_qs.filter(address__icontains=user.region.name_uz)
@@ -1518,7 +1485,14 @@ async def show_job_card(query, context: ContextTypes.DEFAULT_TYPE, job_index: in
             [InlineKeyboardButton(t('btn_back', lang), callback_data="menu_jobs")],
             [InlineKeyboardButton(t('btn_back_main', lang), callback_data="back_main")],
         ]
-        await query.message.edit_text(t('jobs_empty', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        try:
+            if hasattr(query, 'message') and query.message:
+                await query.message.edit_text(t('jobs_empty', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+            elif hasattr(query, 'edit_message_text'):
+                await query.edit_message_text(t('jobs_empty', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        except Exception as e:
+            if "Message is not modified" not in str(e):
+                logger.error(f"Error in show_job_card empty edit_text: {e}")
         return STATE_MAIN_MENU
         
     total = len(jobs)
@@ -1567,7 +1541,15 @@ async def show_job_card(query, context: ContextTypes.DEFAULT_TYPE, job_index: in
         InlineKeyboardButton(t('btn_refresh_jobs', lang), callback_data="job_refresh"),
     ])
     
-    await query.message.edit_text(card_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+    try:
+        if hasattr(query, 'message') and query.message:
+            await query.message.edit_text(card_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        elif hasattr(query, 'edit_message_text'):
+            await query.edit_message_text(card_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+    except Exception as e:
+        if "Message is not modified" not in str(e):
+            logger.error(f"Error in show_job_card edit_text: {e}")
+            
     return STATE_MAIN_MENU
 
 # ==================== 2. MENING PROFILIM (KABINET) ====================
@@ -2032,28 +2014,52 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     # 0. Asosiy menyuga qaytish
     if data == "back_main":
+        try:
+            await query.answer()
+        except Exception:
+            pass
         return await show_main_menu(update, context)
         
     # 1. Ishlarni ko'rish / qidirish
     if data == "menu_jobs":
+        try:
+            await query.answer()
+        except Exception:
+            pass
         return await show_jobs_sub_menu(query, context)
         
     if data == "jobs_matched":
+        try:
+            await query.answer()
+        except Exception:
+            pass
         context.user_data['last_feed_filter'] = {'filter_type': 'matched'}
         jobs = await fetch_jobs_feed(user_id, filter_type='matched')
         context.user_data['current_jobs_list'] = jobs
         return await show_job_card(query, context, 0)
         
     if data == "jobs_by_cat":
+        try:
+            await query.answer()
+        except Exception:
+            pass
         categories, _, _ = await get_categories_page(lang=lang, page=1)
         keyboard = []
         for cat_id, cat_name in categories:
             keyboard.append([InlineKeyboardButton(cat_name, callback_data=f"feedcat_{cat_id}")])
         keyboard.append([InlineKeyboardButton(t('btn_back', lang), callback_data="menu_jobs")])
-        await query.message.edit_text(t('jobs_menu_title', lang), reply_markup=InlineKeyboardMarkup(keyboard))
+        try:
+            await query.message.edit_text(t('jobs_menu_title', lang), reply_markup=InlineKeyboardMarkup(keyboard))
+        except Exception as e:
+            if "Message is not modified" not in str(e):
+                logger.error(f"Error in jobs_by_cat edit_text: {e}")
         return STATE_MAIN_MENU
         
     if data.startswith("feedcat_"):
+        try:
+            await query.answer()
+        except Exception:
+            pass
         cat_id = int(data.replace("feedcat_", ""))
         context.user_data['last_feed_filter'] = {'filter_type': 'category', 'cat_id': cat_id}
         jobs = await fetch_jobs_feed(user_id, filter_type='category', cat_id=cat_id)
@@ -2061,20 +2067,34 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return await show_job_card(query, context, 0)
         
     if data == "jobs_by_geo":
+        try:
+            await query.answer()
+        except Exception:
+            pass
         keyboard = [
             [InlineKeyboardButton(t('btn_geo_district', lang), callback_data="feedgeo_district")],
             [InlineKeyboardButton(t('btn_geo_region', lang), callback_data="feedgeo_region")],
             [
                 InlineKeyboardButton(t('btn_geo_radius_5', lang), callback_data="feedgeo_r5"),
                 InlineKeyboardButton(t('btn_geo_radius_10', lang), callback_data="feedgeo_r10"),
+            ],
+            [
                 InlineKeyboardButton(t('btn_geo_radius_25', lang), callback_data="feedgeo_r25"),
             ],
             [InlineKeyboardButton(t('btn_back', lang), callback_data="menu_jobs")],
         ]
-        await query.message.edit_text(t('jobs_menu_title', lang), reply_markup=InlineKeyboardMarkup(keyboard))
+        try:
+            await query.message.edit_text(t('jobs_menu_title', lang), reply_markup=InlineKeyboardMarkup(keyboard))
+        except Exception as e:
+            if "Message is not modified" not in str(e):
+                logger.error(f"Error in jobs_by_geo edit_text: {e}")
         return STATE_MAIN_MENU
         
     if data.startswith("feedgeo_"):
+        try:
+            await query.answer()
+        except Exception:
+            pass
         geo_type = data.replace("feedgeo_", "")
         if geo_type == 'r5':
             filt = {'filter_type': 'radius', 'radius': 5}
@@ -2093,6 +2113,10 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return await show_job_card(query, context, 0)
         
     if data.startswith("job_nav_"):
+        try:
+            await query.answer()
+        except Exception:
+            pass
         idx = int(data.replace("job_nav_", ""))
         return await show_job_card(query, context, idx)
         
@@ -2101,7 +2125,10 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         jobs = await fetch_jobs_feed(user_id, **filt)
         context.user_data['current_jobs_list'] = jobs
         idx = context.user_data.get('job_index', 0)
-        await query.answer("🔄 Ishlar ro'yxati yangilandi!")
+        try:
+            await query.answer("🔄 Ishlar ro'yxati yangilandi!")
+        except Exception:
+            pass
         return await show_job_card(query, context, idx)
         
     if data.startswith("job_check_"):
@@ -2119,24 +2146,37 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     break
                     
         if not target_job:
-            await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+            try:
+                await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+            except Exception:
+                pass
             return STATE_MAIN_MENU
             
         check_res = await check_job_status_in_db(target_job['raw_id'], target_job['type'], user_id)
-        if check_res['status'] == 'ACTIVE':
-            if check_res['already_applied']:
-                await query.answer(t('job_already_applied_alert', lang), show_alert=True)
+        try:
+            if check_res['status'] == 'ACTIVE':
+                if check_res['already_applied']:
+                    await query.answer(t('job_already_applied_alert', lang), show_alert=True)
+                else:
+                    await query.answer(t('job_status_active_alert', lang), show_alert=True)
+            elif check_res['status'] == 'TAKEN':
+                await query.answer(t('job_status_taken_alert', lang), show_alert=True)
             else:
-                await query.answer(t('job_status_active_alert', lang), show_alert=True)
-        elif check_res['status'] == 'TAKEN':
-            await query.answer(t('job_status_taken_alert', lang), show_alert=True)
-        else:
-            await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+                await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+        except Exception as e:
+            logger.error(f"Error answering job_check query: {e}")
         return STATE_MAIN_MENU
 
     # 1.3. GPS Joylashuvni yangilash
     if data == "menu_update_gps":
-        keyboard = [[KeyboardButton(t('btn_send_gps', lang), request_location=True)]]
+        try:
+            await query.answer()
+        except Exception:
+            pass
+        keyboard = [
+            [KeyboardButton(t('btn_send_gps', lang), request_location=True)],
+            [KeyboardButton(t('btn_cancel', lang))]
+        ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
         try:
             await query.message.delete()
@@ -2259,9 +2299,19 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return STATE_PHONE
         
     if data == "edit_location":
-        keyboard = [[KeyboardButton(t('btn_send_gps', lang), request_location=True)]]
+        try:
+            await query.answer()
+        except Exception:
+            pass
+        keyboard = [
+            [KeyboardButton(t('btn_send_gps', lang), request_location=True)],
+            [KeyboardButton(t('btn_cancel', lang))]
+        ]
         reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
-        await query.message.delete()
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
         await query.message.chat.send_message(t('step2_geo_title', lang), reply_markup=reply_markup, parse_mode='HTML')
         return STATE_UPDATE_LOCATION
         
@@ -2371,11 +2421,11 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def update_location_received_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     loc = update.message.location if update.message else None
+    user_id = update.effective_user.id
+    lang = context.user_data.get('lang', 'uz')
+    
     if loc:
         lat, lon = loc.latitude, loc.longitude
-        user_id = update.effective_user.id
-        lang = context.user_data.get('lang', 'uz')
-        
         geo_info = await save_location_from_gps(user_id, lat, lon)
         profile = await get_user_profile(user_id)
         
@@ -2383,12 +2433,15 @@ async def update_location_received_handler(update: Update, context: ContextTypes
         await update.message.reply_text(success_msg, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
         return await show_main_menu(update, context)
     else:
-        text = update.message.text.strip() if update.message and update.message.text else ""
-        if "bekor" in text.lower() or "orqaga" in text.lower() or text.startswith("❌"):
-            await update.message.reply_text("Joylashuvni yangilash bekor qilindi.", reply_markup=ReplyKeyboardRemove())
-            return await show_main_menu(update, context)
-        
-    return await show_main_menu(update, context)
+        cancel_text = "❌ Joylashuvni yangilash bekor qilindi."
+        if lang == 'oz':
+            cancel_text = "❌ Жойлашувни янгилаш бекор қилинди."
+        elif lang == 'ru':
+            cancel_text = "❌ Обновление локации отменено."
+        elif lang == 'en':
+            cancel_text = "❌ Location update cancelled."
+        await update.message.reply_text(cancel_text, reply_markup=ReplyKeyboardRemove())
+        return await show_main_menu(update, context)
 
 async def cancel_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.clear()
