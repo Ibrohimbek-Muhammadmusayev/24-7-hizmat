@@ -28,6 +28,10 @@ def force_pull_and_sync():
     run("systemctl restart 24-7-bot")
     run("systemctl restart nginx")
 
+    run("sleep 2")
+    run("systemctl status 24-7-web --no-pager")
+    run("systemctl status 24-7-bot --no-pager")
+
     # Test download-backup endpoint
     out_backup, _ = run("curl -I http://127.0.0.1/api/accounts/download-backup/")
     print("BACKUP ENDPOINT STATUS:", out_backup.strip())

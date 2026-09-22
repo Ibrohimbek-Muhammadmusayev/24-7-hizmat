@@ -442,10 +442,6 @@ def fetch_jobs_feed(telegram_id: int, filter_type: str = 'matched', cat_id: int 
     # Query pending Orders
     order_qs = Order.objects.filter(status=Order.Status.PENDING).select_related('category')
     
-    # Exclude job posts where the worker has already applied
-    if user:
-        job_qs = job_qs.exclude(applications__worker=user)
-    
     if filter_type in ['matched', 'all']:
         # "Barcha ishlar" - barcha faol e'lonlar va buyurtmalar ko'rsatiladi
         pass
@@ -707,17 +703,22 @@ def create_job_application_in_db(raw_id: int, job_type: str, worker_telegram_id:
         if job.status != JobPost.Status.ACTIVE:
             return False, "Ushbu e'lon faol emas yoki yopilgan", None
             
-        app, created = JobApplication.objects.get_or_create(
-            job_post=job,
-            worker=worker,
-            defaults={'status': JobApplication.Status.PENDING, 'proposal_message': proposal_msg}
-        )
-        if not created:
-            return False, "Siz allaqachon ushbu ishga so'rov yuborgansiz", None
-            
-        if proposal_msg:
+        app = JobApplication.objects.filter(job_post=job, worker=worker).first()
+        if not app:
+            app = JobApplication.objects.create(
+                job_post=job,
+                worker=worker,
+                status=JobApplication.Status.PENDING,
+                proposal_message=proposal_msg,
+                is_deleted_by_worker=False
+            )
+        else:
+            if app.proposal_message and not app.is_invited and app.status != JobApplication.Status.PENDING:
+                return False, "Siz allaqachon ushbu ishga so'rov yuborgansiz", None
+            app.status = JobApplication.Status.PENDING
             app.proposal_message = proposal_msg
-            app.save(update_fields=['proposal_message'])
+            app.is_deleted_by_worker = False
+            app.save(update_fields=['status', 'proposal_message', 'is_deleted_by_worker'])
             
         job.applications_count = job.applications.count()
         job.save(update_fields=['applications_count'])
