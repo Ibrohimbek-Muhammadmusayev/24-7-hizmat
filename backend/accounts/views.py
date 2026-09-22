@@ -295,11 +295,34 @@ class RequestProfileUpdateView(views.APIView):
         if not user:
             return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
 
-        reason = request.data.get('reason', '').strip() or "Administrator tomonidan ma'lumotlarni qayta to'ldirish talab qilindi."
+        reason = request.data.get('reason', '').strip()
+        fields_list = request.data.get('fields', [])  # list of field keys: ['name', 'phone', 'location', 'positions', 'gender', 'age', 'work_schedule']
+        if isinstance(fields_list, list) and fields_list:
+            fields_str = ",".join(fields_list)
+        else:
+            fields_str = 'all'
+
         user.needs_profile_update = True
         user.profile_update_reason = reason
-        user.is_registered = False  # Reset registration state so bot prompts for missing/full info
-        user.save(update_fields=['needs_profile_update', 'profile_update_reason', 'is_registered'])
+        user.profile_update_fields = fields_str
+        user.is_registered = False  # Reset registration state so bot prompts for missing/targeted info
+        user.save(update_fields=['needs_profile_update', 'profile_update_reason', 'profile_update_fields', 'is_registered'])
+
+        # Translate field names for friendly notification
+        field_labels_map = {
+            'name': "Ism va Familiya",
+            'phone': "Telefon raqam",
+            'location': "Yashash manzili / GPS joylashuv",
+            'positions': "Soha va mutaxassisliklar",
+            'gender': "Jinsi",
+            'age': "Yoshi",
+            'work_schedule': "Bandlik turi va ish rejimi"
+        }
+        if fields_str != 'all':
+            fields_human = ", ".join([field_labels_map.get(f, f) for f in fields_list])
+            fields_instruction = f"📌 <b>Qayta kiritilishi kerak bo'lgan ma'lumotlar:</b> <b>{fields_human}</b>"
+        else:
+            fields_instruction = "📌 <b>Barcha shaxsiy ma'lumotlarni qaytadan to'ldirish talab etiladi.</b>"
 
         # Send Telegram notification if user has telegram_id
         if user.telegram_id:
@@ -317,12 +340,13 @@ class RequestProfileUpdateView(views.APIView):
 
                 if token:
                     bot_instance = Bot(token=token)
-                    lang = user.language or 'uz'
+                    reason_block = f"\n📝 <b>Sabab / Izoh:</b> <i>{reason}</i>\n" if reason else ""
                     notice_text = (
                         f"⚠️ <b>DIQQAT: Profil ma'lumotlaringizni yangilash talab qilinadi!</b>\n\n"
-                        f"Hurmatli <b>{user.get_full_name() or user.first_name}</b>, administrator tomonidan profilingizdagi ma'lumotlarni qayta to'ldirish so'ralmoqda.\n\n"
-                        f"📝 <b>Sabab / Izoh:</b> <i>{reason}</i>\n\n"
-                        f"Iltimos, ma'lumotlaringizni to'g'ri kiritish va tizimdan to'liq foydalanish uchun <b>/start</b> buyrug'ini yuboring."
+                        f"Hurmatli <b>{user.get_full_name() or user.first_name}</b>, administrator tomonidan profilingizdagi quyidagi ma'lumotlarni qayta kiritish so'ralmoqda:\n\n"
+                        f"{fields_instruction}"
+                        f"{reason_block}\n"
+                        f"Iltimos, ma'lumotlarni to'g'rilash va faollashtirish uchun <b>/start</b> buyrug'ini yuboring."
                     )
                     async_to_sync(bot_instance.send_message)(
                         chat_id=user.telegram_id,

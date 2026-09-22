@@ -117,6 +117,7 @@ def get_user_db_record(telegram_id: int):
         'role': user.role,
         'needs_profile_update': user.needs_profile_update,
         'profile_update_reason': user.profile_update_reason,
+        'profile_update_fields': user.profile_update_fields or '',
     }
 
 @sync_to_async
@@ -156,6 +157,7 @@ def save_full_profile_to_db(telegram_id: int, username: str, data: dict):
     user.is_registered = True
     user.needs_profile_update = False
     user.profile_update_reason = ''
+    user.profile_update_fields = ''
     user.is_busy = False
     user.started_worker_bot = True
     user.save()

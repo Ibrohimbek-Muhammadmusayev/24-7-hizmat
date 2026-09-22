@@ -116,6 +116,7 @@ class User(AbstractUser):
     # Admin profile verification and mandatory update request
     needs_profile_update = models.BooleanField(default=False, verbose_name="Qayta to'ldirish talab qilinadimi")
     profile_update_reason = models.TextField(blank=True, null=True, verbose_name="Qayta to'ldirish sababi / Admin izohi")
+    profile_update_fields = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qayta to'ldirilishi kerak bo'lgan maydonlar (vergul bilan)")
 
     def __str__(self):
         return f"{self.first_name or self.username} ({self.phone_number or self.telegram_id}) - {self.get_role_display()}"

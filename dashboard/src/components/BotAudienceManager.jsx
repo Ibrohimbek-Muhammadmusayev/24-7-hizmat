@@ -278,21 +278,47 @@ export default function BotAudienceManager() {
     }
   };
 
+  const [selectedUpdateFields, setSelectedUpdateFields] = useState(['name', 'phone', 'location', 'positions', 'gender_age', 'work_schedule']);
+
   // Request Profile Update Modal
   const handleOpenRequestUpdateModal = (user) => {
     setRequestUpdateUser(user);
+    setSelectedUpdateFields(['name', 'phone', 'location', 'positions', 'gender_age', 'work_schedule']);
     setUpdateReasonInput("Profil ma'lumotlaringizda noaniqliklar aniqlandi. Iltimos, ma'lumotlaringizni to'liq va to'g'ri qaytadan kiriting.");
     setModalFeedback(null);
+  };
+
+  const toggleUpdateField = (fieldKey) => {
+    setSelectedUpdateFields(prev => {
+      if (prev.includes(fieldKey)) {
+        return prev.filter(k => k !== fieldKey);
+      } else {
+        return [...prev, fieldKey];
+      }
+    });
   };
 
   const handleSaveRequestUpdate = async (e) => {
     e.preventDefault();
     if (!requestUpdateUser) return;
+    if (selectedUpdateFields.length === 0) {
+      setModalFeedback({ type: 'error', message: "Iltimos, kamida bitta to'ldirilishi kerak bo'lgan maydonni tanlang!" });
+      return;
+    }
     setModalSaving(true);
     try {
-      await requestProfileUpdate(requestUpdateUser.id, { reason: updateReasonInput });
-      setModalFeedback({ type: 'success', message: "Foydalanuvchiga qayta to'ldirish so'rovi va Telegram xabarnomasi yuborildi!" });
-      setUsers(prev => prev.map(u => u.id === requestUpdateUser.id ? { ...u, needs_profile_update: true, is_registered: false, profile_update_reason: updateReasonInput } : u));
+      await requestProfileUpdate(requestUpdateUser.id, { 
+        reason: updateReasonInput,
+        fields: selectedUpdateFields
+      });
+      setModalFeedback({ type: 'success', message: "Foydalanuvchiga tanlangan maydonlarni qayta to'ldirish so'rovi va Telegram xabarnomasi yuborildi!" });
+      setUsers(prev => prev.map(u => u.id === requestUpdateUser.id ? { 
+        ...u, 
+        needs_profile_update: true, 
+        is_registered: false, 
+        profile_update_reason: updateReasonInput,
+        profile_update_fields: selectedUpdateFields.join(',')
+      } : u));
       
       setTimeout(() => {
         setRequestUpdateUser(null);
@@ -1177,6 +1203,32 @@ export default function BotAudienceManager() {
             )}
 
             <form onSubmit={handleSaveRequestUpdate}>
+              <div className="form-group" style={{ marginBottom: '1rem' }}>
+                <label style={{ fontWeight: 600, display: 'block', marginBottom: '0.4rem' }}>
+                  Qaysi ma'lumotlar qayta to'ldirilishi kerak?
+                </label>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '0.5rem', background: 'var(--bg-secondary)', padding: '0.75rem', borderRadius: '6px' }}>
+                  {[
+                    { key: 'name', label: "👤 Ism va Familiya" },
+                    { key: 'phone', label: "📞 Telefon raqam" },
+                    { key: 'location', label: "📍 Joylashuv / Manzil" },
+                    { key: 'positions', label: "🛠 Soha / Mutaxassislik" },
+                    { key: 'gender_age', label: "⚧ Yoshi va Jinsi" },
+                    { key: 'work_schedule', label: "⏱ Ish rejimi / Bandlik" },
+                  ].map(f => (
+                    <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', cursor: 'pointer', margin: 0 }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedUpdateFields.includes(f.key)}
+                        onChange={() => toggleUpdateField(f.key)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>{f.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
               <div className="form-group" style={{ marginBottom: '1.25rem' }}>
                 <label style={{ fontWeight: 600 }}>Qayta to'ldirish sababi / Foydalanuvchiga xabar:</label>
                 <textarea
