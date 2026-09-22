@@ -114,17 +114,33 @@ export default function App() {
     }
   }, [currentUser]);
 
+  const [sessionExpiredMessage, setSessionExpiredMessage] = useState(null);
+
+  useEffect(() => {
+    const handleExpired = (e) => {
+      const msg = e?.detail?.message || "Sessiyangiz (token) muddati tugadi. Iltimos, qaytadan tizimga kiring!";
+      setSessionExpiredMessage(msg);
+      setCurrentUser(null);
+    };
+
+    window.addEventListener('auth:token_expired', handleExpired);
+    return () => window.removeEventListener('auth:token_expired', handleExpired);
+  }, []);
+
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('activeTab');
+    setSessionExpiredMessage(null);
     setCurrentUser(null);
   };
 
   if (!currentUser) {
     return (
       <LoginModal 
+        sessionMessage={sessionExpiredMessage}
         onLoginSuccess={(user) => { 
+          setSessionExpiredMessage(null);
           setCurrentUser(user); 
           const defaultTab = user.role === 'CALL_CENTER' ? 'callcenter' : 'analytics';
           const initialTab = localStorage.getItem('activeTab') || defaultTab;

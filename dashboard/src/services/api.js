@@ -25,6 +25,29 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Don't trigger if it's already a login request failing
+      const isLoginRequest = error.config && error.config.url && error.config.url.includes('/accounts/login/');
+      if (!isLoginRequest) {
+        const hadToken = Boolean(localStorage.getItem('token'));
+        if (hadToken) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new CustomEvent('auth:token_expired', {
+              detail: { message: "Sessiyangiz (token) muddati tugadi yoki bekor qilindi. Xavfsizlik yuzasidan qaytadan tizimga kiring!" }
+            }));
+          }
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const loginUser = (username, password) => api.post('/accounts/login/', { username, password });
 export const changeAdminCredentials = (data) => api.post('/accounts/change-credentials/', data);
 export const downloadDatabaseBackupUrl = () => `${getBaseUrl()}/accounts/download-backup/`;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { loginUser } from '../services/api';
 import { Lock, ShieldCheck, User, KeyRound, AlertCircle } from 'lucide-react';
 
-export default function LoginModal({ onLoginSuccess }) {
+export default function LoginModal({ onLoginSuccess, sessionMessage }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -50,6 +50,25 @@ export default function LoginModal({ onLoginSuccess }) {
             Tizimga kirish uchun login va parolingizni kiriting
           </p>
         </div>
+
+        {sessionMessage && !error && (
+          <div style={{ 
+            padding: '0.75rem', 
+            borderRadius: '8px', 
+            backgroundColor: 'rgba(245, 158, 11, 0.15)', 
+            color: '#f59e0b', 
+            fontSize: '0.84rem', 
+            marginBottom: '1.25rem',
+            border: '1px solid rgba(245, 158, 11, 0.35)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            lineHeight: 1.4
+          }}>
+            <AlertCircle size={18} style={{ flexShrink: 0 }} />
+            <span>{sessionMessage}</span>
+          </div>
+        )}
 
         {error && (
           <div style={{ 
