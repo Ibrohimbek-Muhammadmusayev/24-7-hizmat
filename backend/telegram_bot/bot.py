@@ -394,10 +394,17 @@ def get_positions_page(category_id: int, lang: str = 'uz', page: int = 1, page_s
 
 def calculate_distance_km(lat1, lon1, lat2, lon2):
     try:
+        if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
+            return 99999.0
+        f_lat1 = float(lat1)
+        f_lon1 = float(lon1)
+        f_lat2 = float(lat2)
+        f_lon2 = float(lon2)
+        
         r = 6371.0
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2) ** 2
+        dlat = math.radians(f_lat2 - f_lat1)
+        dlon = math.radians(f_lon2 - f_lon1)
+        a = math.sin(dlat / 2) ** 2 + math.cos(math.radians(f_lat1)) * math.cos(math.radians(f_lat2)) * math.sin(dlon / 2) ** 2
         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
         return r * c
     except Exception:
@@ -432,7 +439,7 @@ def fetch_jobs_feed(telegram_id: int, filter_type: str = 'matched', cat_id: int 
 
     # Convert JobPosts
     results = []
-    for job in job_qs.order_by('-created_at')[:30]:
+    for job in job_qs.order_by('-created_at')[:50]:
         # Handle radius filtering if requested
         distance_str = ""
         if filter_type == 'radius' and radius:
@@ -441,9 +448,12 @@ def fetch_jobs_feed(telegram_id: int, filter_type: str = 'matched', cat_id: int 
                 if dist > radius:
                     continue
                 distance_str = f" (~{dist:.1f} km)"
-            elif user and user.district and job.district and user.district.lower() not in job.district.lower():
-                # If no GPS coordinates, check district match
-                continue
+            elif user and user.district and job.district:
+                if user.district.lower() not in job.district.lower() and job.district.lower() not in user.district.lower():
+                    continue
+            elif user and user.region and job.region:
+                if user.region_id != job.region_id:
+                    continue
 
         pos_name = job.position.get_name(lang) if job.position else (job.custom_position_name or 'Mutaxassis')
         cat_name = job.category.get_name(lang) if job.category else 'Boshqa'
@@ -581,6 +591,53 @@ def fetch_single_job_post(job_id: int, lang: str = 'uz'):
         'date': job.created_at.strftime("%d.%m.%Y %H:%M") if job.created_at else "",
         'timestamp': job.created_at.timestamp() if job.created_at else 0
     }
+
+@sync_to_async
+def fetch_single_order(order_id: int, lang: str = 'uz'):
+    ord = Order.objects.select_related('category').filter(id=order_id).first()
+    if not ord:
+        return None
+    cat_name = ord.category.get_name(lang) if ord.category else 'Boshqa'
+    price_disp = f"💰 {ord.price:,.0f} so'm" if ord.price else "🤝 Kelishiladi"
+    return {
+        'id': f"ORD-{ord.id}",
+        'raw_id': ord.id,
+        'type': 'order',
+        'title': ord.title or 'Ish xizmati',
+        'category': cat_name,
+        'service_type': ord.service_type or 'Usta xizmati',
+        'address': ord.address or "Ko'rsatilmagan",
+        'work_time': 'Bugun / Tezkor',
+        'work_format': ord.get_work_format_display(),
+        'desc': ord.description or "Batafsil ma'lumot keltirilmagan",
+        'price': price_disp,
+        'customer_name': ord.customer_name or 'Mijoz',
+        'contact': ord.customer_phone or '+998 (71) 200-00-00',
+        'contact_tg': '',
+        'photo_file_id': None,
+        'workers_count': '1 nafar',
+        'gender': 'Farqi yo\'q',
+        'date': ord.created_at.strftime("%d.%m.%Y %H:%M") if ord.created_at else "",
+        'timestamp': ord.created_at.timestamp() if ord.created_at else 0
+    }
+
+async def fetch_single_job(identifier: str or int, lang: str = 'uz'):
+    id_str = str(identifier).strip()
+    if id_str.startswith("JP-"):
+        raw_id = int(id_str.replace("JP-", ""))
+        return await fetch_single_job_post(raw_id, lang)
+    elif id_str.startswith("ORD-"):
+        raw_id = int(id_str.replace("ORD-", ""))
+        return await fetch_single_order(raw_id, lang)
+    else:
+        try:
+            raw_id = int(id_str)
+            job = await fetch_single_job_post(raw_id, lang)
+            if not job:
+                job = await fetch_single_order(raw_id, lang)
+            return job
+        except Exception:
+            return None
 
 @sync_to_async
 def check_job_status_in_db(raw_id: int, job_type: str, worker_telegram_id: int):
@@ -2152,6 +2209,9 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     break
                     
         if not target_job:
+            target_job = await fetch_single_job(job_id_str, lang=lang)
+
+        if not target_job:
             try:
                 await query.answer(t('job_status_closed_alert', lang), show_alert=True)
             except Exception:
@@ -2216,6 +2276,9 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
                     target_job = j
                     break
                     
+        if not target_job:
+            target_job = await fetch_single_job(job_id_str, lang=lang)
+
         if not target_job:
             await query.answer(t('job_status_closed_alert', lang), show_alert=True)
             return STATE_MAIN_MENU
