@@ -2286,6 +2286,11 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return await show_job_card(query, context, 0)
 
     if data.startswith("job_take_"):
+        try:
+            await query.answer()
+        except Exception:
+            pass
+
         job_id_str = data.replace("job_take_", "")
         jobs = context.user_data.get('current_jobs_list', [])
         idx = context.user_data.get('job_index', 0)
@@ -2303,19 +2308,25 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
             target_job = await fetch_single_job(job_id_str, lang=lang)
 
         if not target_job:
-            await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+            try:
+                await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+            except Exception:
+                pass
             return STATE_MAIN_MENU
             
         # Check active status first
         check_res = await check_job_status_in_db(target_job['raw_id'], target_job['type'], user_id)
         if check_res['status'] == 'TAKEN':
-            await query.answer(t('job_status_taken_alert', lang), show_alert=True)
+            try:
+                await query.answer(t('job_status_taken_alert', lang), show_alert=True)
+            except Exception:
+                pass
             return STATE_MAIN_MENU
         elif check_res['status'] == 'CLOSED':
-            await query.answer(t('job_status_closed_alert', lang), show_alert=True)
-            return STATE_MAIN_MENU
-        elif check_res['already_applied']:
-            await query.answer(t('job_already_applied_alert', lang), show_alert=True)
+            try:
+                await query.answer(t('job_status_closed_alert', lang), show_alert=True)
+            except Exception:
+                pass
             return STATE_MAIN_MENU
             
         # Save applying target job in context
@@ -2330,7 +2341,10 @@ async def main_menu_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         keyboard = [
             [InlineKeyboardButton(t('btn_cancel_proposal', lang), callback_data="cancel_apply_proposal")]
         ]
-        await query.message.reply_text(prompt_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        try:
+            await query.message.edit_text(prompt_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        except Exception:
+            await query.message.reply_text(prompt_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
         return STATE_APPLY_PROPOSAL_MSG
         
     if data.startswith("contact_job_"):
