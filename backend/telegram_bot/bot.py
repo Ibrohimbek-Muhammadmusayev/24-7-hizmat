@@ -92,14 +92,31 @@ def get_user_db_record(telegram_id: int):
     user = User.objects.filter(telegram_id=telegram_id).first()
     if not user:
         return None
+
+    # Majburiy maydonlar to'ldirilganligini qat'iy tekshirish
+    has_positions = user.selected_positions.exists() or bool(user.position_id) or bool(user.custom_position)
+    has_location = bool(user.region_id or (user.latitude and user.longitude))
+    is_fully_complete = bool(
+        user.is_registered and 
+        user.phone_number and 
+        user.first_name and 
+        user.gender and 
+        user.age and 
+        has_location and 
+        has_positions and 
+        not user.needs_profile_update
+    )
+
     return {
         'id': user.id,
         'telegram_id': user.telegram_id,
         'first_name': user.first_name,
         'language': user.language or 'uz',
-        'is_registered': user.is_registered,
+        'is_registered': is_fully_complete,
         'is_busy': user.is_busy,
         'role': user.role,
+        'needs_profile_update': user.needs_profile_update,
+        'profile_update_reason': user.profile_update_reason,
     }
 
 @sync_to_async
@@ -137,7 +154,10 @@ def save_full_profile_to_db(telegram_id: int, username: str, data: dict):
     user.employment_type = data.get('employment_type', User.EmploymentType.BOTH)
     user.work_schedule = data.get('work_schedule', User.WorkSchedule.FLEXIBLE)
     user.is_registered = True
+    user.needs_profile_update = False
+    user.profile_update_reason = ''
     user.is_busy = False
+    user.started_worker_bot = True
     user.save()
     
     pos_ids = list(data.get('selected_pos_ids', []))

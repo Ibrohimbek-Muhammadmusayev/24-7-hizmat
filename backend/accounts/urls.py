@@ -12,6 +12,7 @@ from .views import (
     UserListView,
     UserDetailView,
     UpdateUserCreditsView,
+    RequestProfileUpdateView,
     UserFeedbackListView,
     UserFeedbackDetailView
 )
@@ -29,6 +30,7 @@ urlpatterns = [
     path('users/', UserListView.as_view(), name='user-list'),
     path('users/<int:pk>/', UserDetailView.as_view(), name='user-detail'),
     path('users/<int:user_id>/credits/', UpdateUserCreditsView.as_view(), name='update-user-credits'),
+    path('users/<int:user_id>/request-profile-update/', RequestProfileUpdateView.as_view(), name='request-profile-update'),
     path('feedbacks/', UserFeedbackListView.as_view(), name='feedback-list'),
     path('feedbacks/<int:pk>/', UserFeedbackDetailView.as_view(), name='feedback-detail'),
 ]

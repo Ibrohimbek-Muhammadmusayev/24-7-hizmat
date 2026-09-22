@@ -65,6 +65,7 @@ export const createUser = (userData) => api.post('/accounts/users/', userData);
 export const updateUser = (id, userData) => api.patch(`/accounts/users/${id}/`, userData);
 export const deleteUser = (id) => api.delete(`/accounts/users/${id}/`);
 export const updateUserCredits = (userId, data) => api.post(`/accounts/users/${userId}/credits/`, data);
+export const requestProfileUpdate = (userId, data) => api.post(`/accounts/users/${userId}/request-profile-update/`, data);
 
 // Feedbacks & Support
 export const fetchFeedbacks = (params = {}) => api.get('/accounts/feedbacks/', { params });

@@ -103,14 +103,22 @@ def get_client_user(telegram_id: int):
     user = User.objects.filter(telegram_id=telegram_id).first()
     if not user:
         return None
+    is_fully_complete = bool(
+        user.is_registered and 
+        user.phone_number and 
+        user.first_name and 
+        not user.needs_profile_update
+    )
     return {
         'id': user.id,
         'telegram_id': user.telegram_id,
         'first_name': user.first_name,
         'phone_number': user.phone_number,
         'language': user.language or 'uz',
-        'is_registered': user.is_registered,
+        'is_registered': is_fully_complete,
         'role': user.role,
+        'needs_profile_update': user.needs_profile_update,
+        'profile_update_reason': user.profile_update_reason,
     }
 
 @sync_to_async
@@ -131,6 +139,8 @@ def save_or_update_client_profile(telegram_id: int, username: str, data: dict):
     if data.get('phone'):
         user.phone_number = data['phone']
     user.is_registered = True
+    user.needs_profile_update = False
+    user.profile_update_reason = ''
     user.save()
     return user
 

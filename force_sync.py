@@ -16,7 +16,11 @@ def force_pull_and_sync():
             print("[ERR]", err[:300])
         return out, err
 
+    # 1. Protect and backup existing VPS database before any git update
+    run("cp /root/24-7-hizmat/backend/db.sqlite3 /root/db_backup_latest.sqlite3 2>/dev/null || true")
     run("cd /root/24-7-hizmat && git fetch --all && git reset --hard origin/main")
+    # Restore the live database if overwritten or missing
+    run("if [ -f /root/db_backup_latest.sqlite3 ]; then cp -n /root/db_backup_latest.sqlite3 /root/24-7-hizmat/backend/db.sqlite3; fi")
     run("/usr/local/python3.10/bin/python3.10 /root/24-7-hizmat/backend/manage.py migrate --noinput")
     run("/usr/local/python3.10/bin/python3.10 /root/24-7-hizmat/backend/manage.py collectstatic --noinput")
     run("chmod -R 755 /root/24-7-hizmat")

@@ -283,5 +283,60 @@ class UserFeedbackDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserFeedbackSerializer
     queryset = UserFeedback.objects.all()
 
+class RequestProfileUpdateView(views.APIView):
+    """
+    Admin paneldan foydalanuvchining ma'lumotlarini qayta to'ldirishga yuborish (needs_profile_update)
+    va Telegram orqali bildirishnoma xabarini yuborish.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, user_id):
+        user = User.objects.filter(id=user_id).first()
+        if not user:
+            return Response({'error': 'Foydalanuvchi topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+
+        reason = request.data.get('reason', '').strip() or "Administrator tomonidan ma'lumotlarni qayta to'ldirish talab qilindi."
+        user.needs_profile_update = True
+        user.profile_update_reason = reason
+        user.is_registered = False  # Reset registration state so bot prompts for missing/full info
+        user.save(update_fields=['needs_profile_update', 'profile_update_reason', 'is_registered'])
+
+        # Send Telegram notification if user has telegram_id
+        if user.telegram_id:
+            try:
+                from bot_control.models import BotConfig
+                from telegram import Bot
+                from django.conf import settings
+                from asgiref.sync import async_to_sync
+
+                config = BotConfig.get_config()
+                # Determine appropriate token
+                token = (config.token or getattr(settings, 'TELEGRAM_BOT_TOKEN', '')).strip()
+                if user.role == User.Role.CLIENT or user.started_client_bot:
+                    token = (config.client_bot_token or token).strip()
+
+                if token:
+                    bot_instance = Bot(token=token)
+                    lang = user.language or 'uz'
+                    notice_text = (
+                        f"⚠️ <b>DIQQAT: Profil ma'lumotlaringizni yangilash talab qilinadi!</b>\n\n"
+                        f"Hurmatli <b>{user.get_full_name() or user.first_name}</b>, administrator tomonidan profilingizdagi ma'lumotlarni qayta to'ldirish so'ralmoqda.\n\n"
+                        f"📝 <b>Sabab / Izoh:</b> <i>{reason}</i>\n\n"
+                        f"Iltimos, ma'lumotlaringizni to'g'ri kiritish va tizimdan to'liq foydalanish uchun <b>/start</b> buyrug'ini yuboring."
+                    )
+                    async_to_sync(bot_instance.send_message)(
+                        chat_id=user.telegram_id,
+                        text=notice_text,
+                        parse_mode='HTML'
+                    )
+            except Exception as e:
+                print("Error notifying user via telegram on profile update request:", e)
+
+        return Response({
+            'success': True,
+            'message': f"{user.get_full_name() or user.first_name} uchun ma'lumotlarni qayta to'ldirish holati faollashtirildi!",
+            'user': UserSerializer(user).data
+        })
+
 
 

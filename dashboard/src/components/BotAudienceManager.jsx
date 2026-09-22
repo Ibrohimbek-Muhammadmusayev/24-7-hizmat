@@ -5,6 +5,7 @@ import {
   updateUser, 
   deleteUser, 
   updateUserCredits, 
+  requestProfileUpdate,
   fetchCategories, 
   fetchPositions 
 } from '../services/api';
@@ -12,6 +13,7 @@ import {
   Users, 
   Search, 
   RefreshCw, 
+  RotateCcw,
   Shield, 
   Star, 
   Hash, 
@@ -56,6 +58,8 @@ export default function BotAudienceManager() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [creditUser, setCreditUser] = useState(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState(null);
+  const [requestUpdateUser, setRequestUpdateUser] = useState(null);
+  const [updateReasonInput, setUpdateReasonInput] = useState('');
 
   // Credit Edit Modal State
   const [creditsInput, setCreditsInput] = useState(3);
@@ -268,6 +272,33 @@ export default function BotAudienceManager() {
       }, 1000);
     } catch (err) {
       const msg = err.response?.data?.error || 'Kreditlarni saqlashda xatolik!';
+      setModalFeedback({ type: 'error', message: msg });
+    } finally {
+      setModalSaving(false);
+    }
+  };
+
+  // Request Profile Update Modal
+  const handleOpenRequestUpdateModal = (user) => {
+    setRequestUpdateUser(user);
+    setUpdateReasonInput("Profil ma'lumotlaringizda noaniqliklar aniqlandi. Iltimos, ma'lumotlaringizni to'liq va to'g'ri qaytadan kiriting.");
+    setModalFeedback(null);
+  };
+
+  const handleSaveRequestUpdate = async (e) => {
+    e.preventDefault();
+    if (!requestUpdateUser) return;
+    setModalSaving(true);
+    try {
+      await requestProfileUpdate(requestUpdateUser.id, { reason: updateReasonInput });
+      setModalFeedback({ type: 'success', message: "Foydalanuvchiga qayta to'ldirish so'rovi va Telegram xabarnomasi yuborildi!" });
+      setUsers(prev => prev.map(u => u.id === requestUpdateUser.id ? { ...u, needs_profile_update: true, is_registered: false, profile_update_reason: updateReasonInput } : u));
+      
+      setTimeout(() => {
+        setRequestUpdateUser(null);
+      }, 1500);
+    } catch (err) {
+      const msg = err.response?.data?.error || "So'rov yuborishda xatolik yuz berdi!";
       setModalFeedback({ type: 'error', message: msg });
     } finally {
       setModalSaving(false);
@@ -591,6 +622,19 @@ export default function BotAudienceManager() {
                             style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
                           >
                             <Coins size={13} color="#f59e0b" />
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            onClick={() => handleOpenRequestUpdateModal(u)}
+                            title="Ma'lumotlarni qayta to'ldirishga yuborish"
+                            style={{ 
+                              padding: '0.35rem 0.5rem', 
+                              fontSize: '0.76rem',
+                              color: u.needs_profile_update ? '#ef4444' : '#f59e0b',
+                              borderColor: u.needs_profile_update ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'
+                            }}
+                          >
+                            <RotateCcw size={13} />
                           </button>
                           <button
                             className="btn btn-secondary"
@@ -1094,6 +1138,78 @@ export default function BotAudienceManager() {
                 {modalSaving ? 'O\'chirilmoqda...' : 'Ha, O\'chirilsin'}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL 5: REQUEST PROFILE UPDATE MODAL --- */}
+      {requestUpdateUser && (
+        <div className="modal-backdrop" onClick={() => setRequestUpdateUser(null)}>
+          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#f59e0b' }}>
+                <RotateCcw size={20} />
+                <h3 className="card-title" style={{ margin: 0 }}>Profilni Qayta To'ldirish So'rovi</h3>
+              </div>
+              <button className="btn btn-secondary" onClick={() => setRequestUpdateUser(null)} style={{ padding: '0.2rem 0.4rem' }}>
+                <X size={16} />
+              </button>
+            </div>
+
+            <p style={{ fontSize: '0.86rem', color: 'var(--text-secondary)', marginBottom: '1rem' }}>
+              Foydalanuvchi: <b>{requestUpdateUser.first_name || requestUpdateUser.username}</b> (ID: #{requestUpdateUser.id})
+              <br />
+              Ushbu amal bajarilganda foydalanuvchiga Telegram orqali bildirishnoma yuboriladi va botga kirganida ma'lumotlarini (ism, telefon, mutaxassislik, joylashuv) qaytadan to'ldirish so'raladi.
+            </p>
+
+            {modalFeedback && (
+              <div style={{
+                padding: '0.6rem 0.8rem',
+                borderRadius: '6px',
+                fontSize: '0.84rem',
+                marginBottom: '1rem',
+                backgroundColor: modalFeedback.type === 'success' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                color: modalFeedback.type === 'success' ? '#10b981' : '#ef4444',
+                border: `1px solid ${modalFeedback.type === 'success' ? '#10b981' : '#ef4444'}`
+              }}>
+                {modalFeedback.message}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveRequestUpdate}>
+              <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                <label style={{ fontWeight: 600 }}>Qayta to'ldirish sababi / Foydalanuvchiga xabar:</label>
+                <textarea
+                  className="form-control"
+                  rows={3}
+                  value={updateReasonInput}
+                  onChange={(e) => setUpdateReasonInput(e.target.value)}
+                  placeholder="Sabab yoki ko'rsatmani yozing..."
+                  style={{ marginTop: '0.4rem', fontSize: '0.86rem', resize: 'vertical' }}
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setRequestUpdateUser(null)}
+                  disabled={modalSaving}
+                >
+                  Bekor Qilish
+                </button>
+                <button
+                  type="submit"
+                  className="btn"
+                  disabled={modalSaving}
+                  style={{ backgroundColor: '#f59e0b', borderColor: '#f59e0b', color: '#000', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <RotateCcw size={15} />
+                  {modalSaving ? 'Yuborilmoqda...' : 'Qayta to\'ldirishga yuborish'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -56,6 +56,7 @@ class UserSerializer(serializers.ModelSerializer):
             'is_online', 'is_busy', 'is_registered', 'notification_setting',
             'specialty', 'rating', 'completed_jobs_count', 'fcm_token', 'job_credits', 
             'started_client_bot', 'started_worker_bot',
+            'needs_profile_update', 'profile_update_reason',
             'portfolio_items', 'received_reviews', 'date_joined'
         ]
         read_only_fields = ['id', 'date_joined']
