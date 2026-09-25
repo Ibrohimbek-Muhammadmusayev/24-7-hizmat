@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   fetchBotStatus, 
   startBot, 
@@ -36,6 +36,7 @@ import {
 
 export default function BotControlPanel() {
   const [activeTab, setActiveTab] = useState('token'); // 'token' | 'cms' | 'test'
+  const initialLoadedRef = useRef(false);
   
   const [botStatus, setBotStatus] = useState({
     token: '',
@@ -100,27 +101,28 @@ export default function BotControlPanel() {
           localStorage.setItem('project_name', res.data.project_name);
         }
         
-        const wTok = res.data.worker_bot_token || res.data.token || '';
-        const cTok = res.data.client_bot_token || '';
-        
-        if (wTok && !workerTokenInput) {
-          setWorkerTokenInput(wTok);
-        }
-        if (cTok && !clientTokenInput) {
-          setClientTokenInput(cTok);
-        }
+        // Only update form inputs on first initial load or explicit manual refresh / save
+        if (!initialLoadedRef.current || isManual) {
+          const wTok = res.data.worker_bot_token || res.data.token || '';
+          const cTok = res.data.client_bot_token || '';
+          
+          if (wTok) setWorkerTokenInput(wTok);
+          if (cTok) setClientTokenInput(cTok);
 
-        setCmsData({
-          project_name: res.data.project_name || 'IshBazari',
-          welcome_text: res.data.welcome_text || '',
-          about_text: res.data.about_text || '',
-          call_center_phone: res.data.call_center_phone || '+998 (71) 200-00-00',
-          help_text: res.data.help_text || '',
-          client_bot_url: res.data.client_bot_url || '',
-          worker_bot_url: res.data.worker_bot_url || '',
-          app_url: res.data.app_url || '',
-          app_url_enabled: Boolean(res.data.app_url_enabled)
-        });
+          setCmsData({
+            project_name: res.data.project_name || 'IshBazari',
+            welcome_text: res.data.welcome_text || '',
+            about_text: res.data.about_text || '',
+            call_center_phone: res.data.call_center_phone || '+998 (71) 200-00-00',
+            help_text: res.data.help_text || '',
+            client_bot_url: res.data.client_bot_url || '',
+            worker_bot_url: res.data.worker_bot_url || '',
+            app_url: res.data.app_url || '',
+            app_url_enabled: Boolean(res.data.app_url_enabled)
+          });
+
+          initialLoadedRef.current = true;
+        }
       }
     } catch (err) {
       console.error("Bot holatini yuklashda xatolik:", err);
