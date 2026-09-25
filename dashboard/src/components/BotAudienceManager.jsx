@@ -59,7 +59,8 @@ const AVAILABLE_TABS = [
   { id: 'settings', label: 'Tizim Sozlamalari', icon: '⚙️' },
 ];
 
-export default function BotAudienceManager() {
+export default function BotAudienceManager({ currentUser }) {
+  const isSuper = Boolean(currentUser?.is_superuser);
   const [users, setUsers] = useState([]);
   const [categories, setCategories] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -432,14 +433,22 @@ export default function BotAudienceManager() {
               <RefreshCw size={14} className={loading ? 'spin' : ''} />
               <span>Yangilash</span>
             </button>
-            <button className="btn btn-secondary" onClick={() => handleOpenAddModal('BOT_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <UserPlus size={15} />
-              <span>+ Bot Foydalanuvchi</span>
-            </button>
-            <button className="btn" onClick={() => handleOpenAddModal('STAFF_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
-              <ShieldCheck size={16} />
-              <span>+ Yangi Dashboard User (Xodim)</span>
-            </button>
+            {isSuper ? (
+              <>
+                <button className="btn btn-secondary" onClick={() => handleOpenAddModal('BOT_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <UserPlus size={15} />
+                  <span>+ Bot Foydalanuvchi</span>
+                </button>
+                <button className="btn" onClick={() => handleOpenAddModal('STAFF_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+                  <ShieldCheck size={16} />
+                  <span>+ Yangi Dashboard User (Xodim)</span>
+                </button>
+              </>
+            ) : (
+              <span className="badge" style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)', color: 'var(--primary)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '0.45rem 0.85rem', fontSize: '0.82rem', gap: '0.4rem' }}>
+                <Eye size={14} /> Faqat Ko'rish Rejimi
+              </span>
+            )}
           </div>
         </div>
 
@@ -722,82 +731,87 @@ export default function BotAudienceManager() {
                             <Eye size={13} color="#06b6d4" />
                           </button>
 
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => handleOpenEditModal(u)}
-                            title="Tahrirlash"
-                            style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
-                          >
-                            <Edit3 size={13} color="#3b82f6" />
-                          </button>
-
-                          {/* Super Admin uchun boshqa amallar (kredit, qayta to'ldirish, o'chirish) yopiq */}
-                          {u.is_superuser ? (
-                            <span 
-                              title="Super Admin hisobi daxlsiz (Faqat tahrirlash mumkin)" 
-                              style={{ 
-                                padding: '0.35rem 0.6rem', 
-                                fontSize: '0.74rem', 
-                                color: '#fbbf24', 
-                                background: 'rgba(251, 191, 36, 0.12)', 
-                                border: '1px solid rgba(251, 191, 36, 0.3)', 
-                                borderRadius: '6px',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.25rem',
-                                fontWeight: 700
-                              }}
-                            >
-                              👑 Super Admin
-                            </span>
-                          ) : (
+                          {/* Faqat Super Admin uchun boshqaruv amallari ochiq */}
+                          {isSuper && (
                             <>
                               <button
                                 className="btn btn-secondary"
-                                onClick={() => handleOpenCreditModal(u)}
-                                title="Kredit tahrirlash"
+                                onClick={() => handleOpenEditModal(u)}
+                                title="Tahrirlash"
                                 style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
                               >
-                                <Coins size={13} color="#f59e0b" />
+                                <Edit3 size={13} color="#3b82f6" />
                               </button>
-                              <button
-                                className="btn btn-secondary"
-                                onClick={() => handleOpenRequestUpdateModal(u)}
-                                title="Ma'lumotlarni qayta to'ldirishga yuborish"
-                                style={{ 
-                                  padding: '0.35rem 0.5rem', 
-                                  fontSize: '0.76rem', 
-                                  color: u.needs_profile_update ? '#ef4444' : '#f59e0b',
-                                  borderColor: u.needs_profile_update ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'
-                                }}
-                              >
-                                <RotateCcw size={13} />
-                              </button>
-                              {!(u.is_staff || u.role === 'ADMIN') ? (
-                                <button
-                                  className="btn btn-secondary"
-                                  onClick={() => setDeleteConfirmUser(u)}
-                                  title="O'chirish"
-                                  style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              ) : (
+
+                              {/* Super Admin uchun boshqa amallar (kredit, qayta to'ldirish, o'chirish) yopiq */}
+                              {u.is_superuser ? (
                                 <span 
-                                  title="Admin hisobi (O'chirish mumkin emas)" 
+                                  title="Super Admin hisobi daxlsiz (Faqat tahrirlash mumkin)" 
                                   style={{ 
-                                    padding: '0.35rem 0.5rem', 
-                                    fontSize: '0.76rem', 
-                                    color: '#10b981', 
-                                    background: 'rgba(16, 185, 129, 0.1)', 
-                                    border: '1px solid rgba(16, 185, 129, 0.25)', 
+                                    padding: '0.35rem 0.6rem', 
+                                    fontSize: '0.74rem', 
+                                    color: '#fbbf24', 
+                                    background: 'rgba(251, 191, 36, 0.12)', 
+                                    border: '1px solid rgba(251, 191, 36, 0.3)', 
                                     borderRadius: '6px',
                                     display: 'inline-flex',
-                                    alignItems: 'center'
+                                    alignItems: 'center',
+                                    gap: '0.25rem',
+                                    fontWeight: 700
                                   }}
                                 >
-                                  <Shield size={13} />
+                                  👑 Super Admin
                                 </span>
+                              ) : (
+                                <>
+                                  <button
+                                    className="btn btn-secondary"
+                                    onClick={() => handleOpenCreditModal(u)}
+                                    title="Kredit tahrirlash"
+                                    style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
+                                  >
+                                    <Coins size={13} color="#f59e0b" />
+                                  </button>
+                                  <button
+                                    className="btn btn-secondary"
+                                    onClick={() => handleOpenRequestUpdateModal(u)}
+                                    title="Ma'lumotlarni qayta to'ldirishga yuborish"
+                                    style={{ 
+                                      padding: '0.35rem 0.5rem', 
+                                      fontSize: '0.76rem', 
+                                      color: u.needs_profile_update ? '#ef4444' : '#f59e0b',
+                                      borderColor: u.needs_profile_update ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'
+                                    }}
+                                  >
+                                    <RotateCcw size={13} />
+                                  </button>
+                                  {!(u.is_staff || u.role === 'ADMIN') ? (
+                                    <button
+                                      className="btn btn-secondary"
+                                      onClick={() => setDeleteConfirmUser(u)}
+                                      title="O'chirish"
+                                      style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
+                                    >
+                                      <Trash2 size={13} />
+                                    </button>
+                                  ) : (
+                                    <span 
+                                      title="Admin hisobi (O'chirish mumkin emas)" 
+                                      style={{ 
+                                        padding: '0.35rem 0.5rem', 
+                                        fontSize: '0.76rem', 
+                                        color: '#10b981', 
+                                        background: 'rgba(16, 185, 129, 0.1)', 
+                                        border: '1px solid rgba(16, 185, 129, 0.25)', 
+                                        borderRadius: '6px',
+                                        display: 'inline-flex',
+                                        alignItems: 'center'
+                                      }}
+                                    >
+                                      <Shield size={13} />
+                                    </span>
+                                  )}
+                                </>
                               )}
                             </>
                           )}
@@ -970,9 +984,11 @@ export default function BotAudienceManager() {
               <button className="btn btn-secondary" onClick={() => setViewingUser(null)}>
                 Yopish
               </button>
-              <button className="btn" onClick={() => { const u = viewingUser; setViewingUser(null); handleOpenEditModal(u); }}>
-                <Edit3 size={14} /> Tahrirlash
-              </button>
+              {isSuper && (
+                <button className="btn" onClick={() => { const u = viewingUser; setViewingUser(null); handleOpenEditModal(u); }}>
+                  <Edit3 size={14} /> Tahrirlash
+                </button>
+              )}
             </div>
           </div>
         </div>
