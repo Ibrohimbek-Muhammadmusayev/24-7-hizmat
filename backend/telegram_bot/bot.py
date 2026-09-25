@@ -2690,18 +2690,13 @@ async def unhandled_callback_fallback(update: Update, context: ContextTypes.DEFA
     lang = db_user['language'] if db_user else context.user_data.get('lang', 'uz')
     
     text = t('bot_outdated_button_msg', lang)
-    keyboard = [
-        [InlineKeyboardButton(t('btn_goto_main_menu', lang), callback_data="reset_to_main_menu")]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    
     if query and query.message:
         try:
-            await query.edit_message_text(text, reply_markup=reply_markup, parse_mode='HTML')
+            await query.edit_message_text(text, reply_markup=None, parse_mode='HTML')
         except Exception:
-            await query.message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
+            await query.message.reply_text(text, reply_markup=None, parse_mode='HTML')
     elif update.effective_message:
-        await update.effective_message.reply_text(text, reply_markup=reply_markup, parse_mode='HTML')
+        await update.effective_message.reply_text(text, reply_markup=None, parse_mode='HTML')
     return STATE_MAIN_MENU
 
 async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -2716,11 +2711,6 @@ async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYP
                 lang = db_user['language']
             
         error_msg = t('bot_error_msg', lang)
-        keyboard = [
-            [InlineKeyboardButton(t('btn_goto_main_menu', lang), callback_data="reset_to_main_menu")]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        
         if isinstance(update, Update):
             if update.callback_query:
                 try:
@@ -2729,12 +2719,12 @@ async def global_error_handler(update: object, context: ContextTypes.DEFAULT_TYP
                     pass
                 if update.callback_query.message:
                     try:
-                        await update.callback_query.message.reply_text(error_msg, reply_markup=reply_markup, parse_mode='HTML')
+                        await update.callback_query.message.reply_text(error_msg, reply_markup=None, parse_mode='HTML')
                     except Exception:
                         pass
             elif update.effective_message:
                 try:
-                    await update.effective_message.reply_text(error_msg, reply_markup=reply_markup, parse_mode='HTML')
+                    await update.effective_message.reply_text(error_msg, reply_markup=None, parse_mode='HTML')
                 except Exception:
                     pass
     except Exception as e:

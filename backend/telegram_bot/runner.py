@@ -27,16 +27,11 @@ async def broadcast_restart_notification(bot):
             lang = u.get('language') or 'uz'
             
             text = t('bot_restarted_notification', lang)
-            keyboard = [
-                [InlineKeyboardButton(t('btn_restart_bot', lang), callback_data="reset_to_main_menu")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
             
             try:
                 await bot.send_message(
                     chat_id=tg_id,
                     text=text,
-                    reply_markup=reply_markup,
                     parse_mode='HTML'
                 )
                 sent_count += 1
@@ -66,16 +61,11 @@ async def broadcast_client_restart_notification(bot):
             lang = u.get('language') or 'uz'
             
             text = client_t('bot_restarted_notification', lang)
-            keyboard = [
-                [InlineKeyboardButton(client_t('btn_restart_bot', lang), callback_data="reset_to_main_menu")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
             
             try:
                 await bot.send_message(
                     chat_id=tg_id,
                     text=text,
-                    reply_markup=reply_markup,
                     parse_mode='HTML'
                 )
                 sent_count += 1
