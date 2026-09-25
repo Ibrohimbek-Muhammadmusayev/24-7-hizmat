@@ -875,124 +875,248 @@ export default function BotAudienceManager({ currentUser }) {
       </div>
 
       {/* --- MODAL 1: VIEW DETAILS MODAL --- */}
-      {viewingUser && (
-        <div className="modal-backdrop" onClick={() => setViewingUser(null)}>
-          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '540px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <Users size={20} color="#3b82f6" />
-                <h3 className="card-title" style={{ margin: 0 }}>Foydalanuvchi Profili</h3>
-              </div>
-              <button onClick={() => setViewingUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <X size={18} />
-              </button>
-            </div>
+      {viewingUser && (() => {
+        const isSuperAdmin = Boolean(viewingUser.is_superuser);
+        const isStaff = Boolean(viewingUser.is_staff || viewingUser.role === 'ADMIN' || viewingUser.role === 'CALL_CENTER' || isSuperAdmin);
+        const isWorker = viewingUser.role === 'WORKER' && !isStaff;
+        const isClient = viewingUser.role === 'CLIENT' && !isStaff;
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', backgroundColor: 'var(--bg-inner)', borderRadius: '10px', marginBottom: '1.25rem' }}>
-              <div style={{
-                width: '48px',
-                height: '48px',
-                borderRadius: '50%',
-                background: viewingUser.role === 'WORKER' ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '1.2rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                {(viewingUser.first_name ? viewingUser.first_name[0] : (viewingUser.username ? viewingUser.username[0] : 'U')).toUpperCase()}
-              </div>
-              <div>
-                <h4 style={{ margin: 0, fontSize: '1.05rem', color: 'var(--text-main)' }}>
-                  {viewingUser.first_name || viewingUser.username} {viewingUser.last_name || ''}
-                </h4>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                  ID: #{viewingUser.id} • @{viewingUser.username}
-                </div>
-              </div>
-            </div>
+        const avatarGradient = isSuperAdmin
+          ? 'linear-gradient(135deg, #f59e0b, #d97706)'
+          : isStaff
+          ? 'linear-gradient(135deg, #8b5cf6, #6366f1)'
+          : isWorker
+          ? 'linear-gradient(135deg, #10b981, #059669)'
+          : 'linear-gradient(135deg, #3b82f6, #2563eb)';
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Rol:</span>
-                <div style={{ fontWeight: 600, color: viewingUser.role === 'WORKER' ? '#10b981' : '#3b82f6', marginTop: '0.2rem' }}>
-                  {viewingUser.role === 'WORKER' ? '👷 Usta / Mutaxassis' : '👔 Ish Beruvchi'}
+        return (
+          <div className="modal-backdrop" onClick={() => setViewingUser(null)}>
+            <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '580px', maxHeight: '90vh', overflowY: 'auto' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Users size={20} color="#3b82f6" />
+                  <h3 className="card-title" style={{ margin: 0 }}>
+                    {isStaff ? "Dashboard Xodimi Profili" : isWorker ? "Usta / Mutaxassis Profili" : "Ish Beruvchi / Mijoz Profili"}
+                  </h3>
                 </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telefon:</span>
-                <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
-                  {viewingUser.phone_number || 'Kiritilmagan'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telegram ID:</span>
-                <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
-                  {viewingUser.telegram_id ? `#${viewingUser.telegram_id}` : 'Mavjud emas'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Kreditlar Balansi:</span>
-                <div style={{ fontWeight: 700, color: '#f59e0b', marginTop: '0.2rem' }}>
-                  {viewingUser.job_credits ?? 0} ta
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Manzil:</span>
-                <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>
-                  {viewingUser.region_name || viewingUser.district || 'Kiritilmagan'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Mutaxassislik:</span>
-                <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>
-                  {viewingUser.specialty || viewingUser.position_details?.name || 'Mavjud emas'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ro'yxatdan o'tgan sana:</span>
-                <div style={{ fontWeight: 500, fontSize: '0.8rem', marginTop: '0.2rem' }}>
-                  {viewingUser.date_joined ? new Date(viewingUser.date_joined).toLocaleString() : '—'}
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Faollik (Online):</span>
-                <div style={{ marginTop: '0.2rem' }}>
-                  <span className={`badge ${viewingUser.is_online ? 'badge-online' : 'badge-offline'}`}>
-                    {viewingUser.is_online ? 'Online' : 'Offline'}
-                  </span>
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Bandlik Holati:</span>
-                <div style={{ marginTop: '0.2rem' }}>
-                  <span className={`badge ${viewingUser.is_busy ? 'badge-busy' : 'badge-finished'}`}>
-                    {viewingUser.is_busy ? '🔴 Band (Ishda)' : "🟢 Bo'sh"}
-                  </span>
-                </div>
-              </div>
-              <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
-                <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Til:</span>
-                <div style={{ fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>
-                  {viewingUser.language || 'UZ'}
-                </div>
-              </div>
-            </div>
-
-            <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
-              <button className="btn btn-secondary" onClick={() => setViewingUser(null)}>
-                Yopish
-              </button>
-              {isSuper && (
-                <button className="btn" onClick={() => { const u = viewingUser; setViewingUser(null); handleOpenEditModal(u); }}>
-                  <Edit3 size={14} /> Tahrirlash
+                <button onClick={() => setViewingUser(null)} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                  <X size={18} />
                 </button>
+              </div>
+
+              {/* Profile Card Header */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', padding: '1rem', backgroundColor: 'var(--bg-inner)', borderRadius: '10px', marginBottom: '1.25rem' }}>
+                <div style={{
+                  width: '52px',
+                  height: '52px',
+                  borderRadius: '50%',
+                  background: avatarGradient,
+                  color: '#fff',
+                  fontWeight: 800,
+                  fontSize: '1.3rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+                }}>
+                  {(viewingUser.first_name ? viewingUser.first_name[0] : (viewingUser.username ? viewingUser.username[0] : 'U')).toUpperCase()}
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '1.1rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    {viewingUser.first_name || viewingUser.username} {viewingUser.last_name || ''}
+                    {isSuperAdmin && <span style={{ fontSize: '0.74rem', color: '#f59e0b', fontWeight: 800 }}>(Super Admin)</span>}
+                  </h4>
+                  <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                    ID: #{viewingUser.id} • @{viewingUser.username}
+                  </div>
+                </div>
+              </div>
+
+              {/* Dynamic Grid based on Role */}
+              {isStaff ? (
+                /* --- STAFF / ADMIN DETAILS --- */
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Rol / Lavozim:</span>
+                    <div style={{ fontWeight: 700, color: isSuperAdmin ? '#f59e0b' : '#8b5cf6', marginTop: '0.2rem' }}>
+                      {isSuperAdmin ? '👑 Super Administrator' : viewingUser.role === 'ADMIN' ? '🛡️ Menejer / Admin' : '🎧 Call Center Operatori'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telefon Raqam:</span>
+                    <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      {viewingUser.phone_number || '—'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Sessiya Davomiyligi:</span>
+                    <div style={{ fontWeight: 600, color: isSuperAdmin ? 'var(--text-main)' : 'var(--warning)', marginTop: '0.2rem' }}>
+                      {isSuperAdmin ? 'Cheksiz' : '10 daqiqa (Avto-chiqish)'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Til:</span>
+                    <div style={{ fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>
+                      {viewingUser.language || 'UZ'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0, gridColumn: 'span 2' }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ruxsat etilgan bo'limlar:</span>
+                    <div style={{ fontWeight: 600, color: 'var(--primary)', marginTop: '0.3rem', display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+                      {isSuperAdmin || !viewingUser.allowed_tabs || viewingUser.allowed_tabs === 'all' ? (
+                        <span className="badge badge-finished">Barcha bo'limlar ({AVAILABLE_TABS.length} ta)</span>
+                      ) : (
+                        viewingUser.allowed_tabs.split(',').map(tabId => {
+                          const tabObj = AVAILABLE_TABS.find(t => t.id === tabId.trim());
+                          return (
+                            <span key={tabId} className="badge badge-primary" style={{ fontSize: '0.76rem' }}>
+                              {tabObj ? `${tabObj.icon} ${tabObj.label}` : tabId}
+                            </span>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ) : isWorker ? (
+                /* --- WORKER DETAILS --- */
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Kasbi / Mutaxassislik:</span>
+                    <div style={{ fontWeight: 700, color: '#10b981', marginTop: '0.2rem' }}>
+                      {viewingUser.specialty || viewingUser.position_details?.name || 'Kiritilmagan'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ish Grafiki:</span>
+                    <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>
+                      {viewingUser.work_schedule === '24_7' ? '🔥 24/7 Shoshilinch' : (viewingUser.work_schedule === 'day_shift' ? '☀️ Kunduzgi' : '⏱️ Erkin grafik')}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Bandlik Holati:</span>
+                    <div style={{ marginTop: '0.2rem' }}>
+                      <span className={`badge ${viewingUser.is_busy ? 'badge-busy' : 'badge-finished'}`}>
+                        {viewingUser.is_busy ? '🔴 Band (Ishda)' : "🟢 Bo'sh"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Faollik (Online):</span>
+                    <div style={{ marginTop: '0.2rem' }}>
+                      <span className={`badge ${viewingUser.is_online ? 'badge-online' : 'badge-offline'}`}>
+                        {viewingUser.is_online ? 'Online' : 'Offline'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telefon Raqam:</span>
+                    <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      {viewingUser.phone_number || '—'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Kreditlar Balansi:</span>
+                    <div style={{ fontWeight: 700, color: '#f59e0b', marginTop: '0.2rem' }}>
+                      {viewingUser.job_credits ?? 0} ta
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Manzil:</span>
+                    <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>
+                      {viewingUser.region_name || viewingUser.district || 'Kiritilmagan'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telegram ID:</span>
+                    <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      {viewingUser.telegram_id ? `#${viewingUser.telegram_id}` : 'Mavjud emas'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ro'yxatdan o'tgan:</span>
+                    <div style={{ fontWeight: 500, fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                      {viewingUser.date_joined ? new Date(viewingUser.date_joined).toLocaleDateString() : '—'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Til:</span>
+                    <div style={{ fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>
+                      {viewingUser.language || 'UZ'}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* --- CLIENT DETAILS --- */
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', fontSize: '0.85rem' }}>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Rol:</span>
+                    <div style={{ fontWeight: 700, color: '#3b82f6', marginTop: '0.2rem' }}>
+                      👔 Ish Beruvchi / Mijoz
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telefon Raqam:</span>
+                    <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      {viewingUser.phone_number || '—'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Manzil / Hudud:</span>
+                    <div style={{ fontWeight: 600, marginTop: '0.2rem' }}>
+                      {viewingUser.region_name || viewingUser.district || 'Kiritilmagan'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Telegram ID:</span>
+                    <div style={{ fontWeight: 600, fontFamily: 'monospace', marginTop: '0.2rem' }}>
+                      {viewingUser.telegram_id ? `#${viewingUser.telegram_id}` : 'Mavjud emas'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Kreditlar Balansi:</span>
+                    <div style={{ fontWeight: 700, color: '#f59e0b', marginTop: '0.2rem' }}>
+                      {viewingUser.job_credits ?? 0} ta
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ro'yxat Holati:</span>
+                    <div style={{ marginTop: '0.2rem' }}>
+                      <span className={`badge ${viewingUser.is_registered ? 'badge-finished' : 'badge-offline'}`}>
+                        {viewingUser.is_registered ? "✅ To'liq Ro'yxatdan o'tgan" : "🟡 Chala Ro'yxat"}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Ro'yxatdan o'tgan:</span>
+                    <div style={{ fontWeight: 500, fontSize: '0.8rem', marginTop: '0.2rem' }}>
+                      {viewingUser.date_joined ? new Date(viewingUser.date_joined).toLocaleDateString() : '—'}
+                    </div>
+                  </div>
+                  <div className="card" style={{ padding: '0.75rem', marginBottom: 0 }}>
+                    <span style={{ color: 'var(--text-muted)', fontSize: '0.74rem' }}>Til:</span>
+                    <div style={{ fontWeight: 600, textTransform: 'uppercase', marginTop: '0.2rem' }}>
+                      {viewingUser.language || 'UZ'}
+                    </div>
+                  </div>
+                </div>
               )}
+
+              {/* Modal Actions */}
+              <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                <button className="btn btn-secondary" onClick={() => setViewingUser(null)}>
+                  Yopish
+                </button>
+                {isSuper && (
+                  <button className="btn" onClick={() => { const u = viewingUser; setViewingUser(null); handleOpenEditModal(u); }}>
+                    <Edit3 size={14} /> Tahrirlash
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* --- MODAL 2: CREATE / EDIT USER MODAL --- */}
       {(isAddModalOpen || editingUser) && (
@@ -1000,14 +1124,21 @@ export default function BotAudienceManager({ currentUser }) {
           <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {formData.account_type === 'STAFF_USER' ? (
+                {formData.account_type === 'STAFF_USER' || formData.role === 'ADMIN' || formData.role === 'CALL_CENTER' ? (
                   <ShieldCheck size={22} color="#3b82f6" />
+                ) : formData.role === 'WORKER' ? (
+                  <HardHat size={22} color="#10b981" />
                 ) : (
-                  <UserPlus size={20} color="#3b82f6" />
+                  <Briefcase size={22} color="#3b82f6" />
                 )}
                 <h3 className="card-title" style={{ margin: 0 }}>
                   {editingUser 
-                    ? (formData.account_type === 'STAFF_USER' ? `Dashboard Xodimini Tahrirlash: @${formData.username}` : "Foydalanuvchi Ma'lumotlarini Tahrirlash")
+                    ? (formData.account_type === 'STAFF_USER' || formData.role === 'ADMIN' || formData.role === 'CALL_CENTER'
+                        ? `Dashboard Xodimini Tahrirlash: @${formData.username}`
+                        : formData.role === 'WORKER'
+                        ? `Ustani Tahrirlash: ${formData.first_name || formData.username}`
+                        : `Mijozni Tahrirlash: ${formData.first_name || formData.username}`
+                      )
                     : (formData.account_type === 'STAFF_USER' ? "Yangi Dashboard Xodimi (Sub-Admin) Yaratish" : "Yangi Foydalanuvchi Yaratish")
                   }
                 </h3>
@@ -1017,7 +1148,7 @@ export default function BotAudienceManager({ currentUser }) {
               </button>
             </div>
 
-            {/* Account Type Switcher (only when creating or when allowed to switch) */}
+            {/* Account Type Switcher (only when creating) */}
             {!editingUser && (
               <div style={{
                 display: 'grid',
@@ -1081,7 +1212,7 @@ export default function BotAudienceManager({ currentUser }) {
                     transition: 'all 0.15s ease'
                   }}
                 >
-                  <Users size={16} /> 📱 Telegram Bot Foydalanuvchisi
+                  <Users size={16} /> 📱 Bot Foydalanuvchisi (Usta/Mijoz)
                 </button>
               </div>
             )}
@@ -1102,7 +1233,7 @@ export default function BotAudienceManager({ currentUser }) {
             )}
 
             <form onSubmit={handleSaveUserForm}>
-              {formData.account_type === 'STAFF_USER' ? (
+              {formData.account_type === 'STAFF_USER' || formData.role === 'ADMIN' || formData.role === 'CALL_CENTER' ? (
                 /* --- STAFF / SUB-ADMIN USER FORM --- */
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   
@@ -1249,7 +1380,7 @@ export default function BotAudienceManager({ currentUser }) {
                             <input
                               type="checkbox"
                               checked={isChecked}
-                              onChange={() => {}} // Handled by div onClick
+                              onChange={() => {}}
                               style={{ cursor: 'pointer' }}
                             />
                             <span style={{ fontSize: '0.88rem' }}>{tab.icon}</span>
@@ -1263,129 +1394,257 @@ export default function BotAudienceManager({ currentUser }) {
                   </div>
 
                 </div>
+              ) : formData.role === 'WORKER' ? (
+                /* --- WORKER FORM --- */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+                    border: '1px solid rgba(16, 185, 129, 0.25)',
+                    fontSize: '0.82rem',
+                    color: '#10b981',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontWeight: 600
+                  }}>
+                    <HardHat size={16} /> 👷 Usta / Mutaxassis Ma'lumotlari & Sozlamalari
+                  </div>
+
+                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    <div className="form-group">
+                      <label>Ismi *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-control"
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        placeholder="Masalan: Ali"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Familiyasi</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.last_name}
+                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        placeholder="Masalan: Valiyev"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Telefon Raqam *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-control"
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                        placeholder="+998901234567"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Rol *</label>
+                      <select
+                        className="form-control"
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      >
+                        <option value="WORKER">👷 Usta / Mutaxassis</option>
+                        <option value="CLIENT">👔 Ish Beruvchi / Mijoz</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Mutaxassislik / Kasbi *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-control"
+                        value={formData.specialty}
+                        onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                        placeholder="Masalan: Santexnik, Elektrik..."
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Ish Grafiki</label>
+                      <select
+                        className="form-control"
+                        value={formData.work_schedule}
+                        onChange={(e) => setFormData({ ...formData, work_schedule: e.target.value })}
+                      >
+                        <option value="24_7">🔥 24/7 Shoshilinch</option>
+                        <option value="day_shift">☀️ Kunduzgi (09:00 - 18:00)</option>
+                        <option value="flexible">⏱️ Erkin grafik</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Tuman / Hudud</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.district}
+                        onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                        placeholder="Masalan: Chilonzor, Yunusobod..."
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Kreditlar Soni</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-control"
+                        value={formData.job_credits}
+                        onChange={(e) => setFormData({ ...formData, job_credits: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Telegram ID (ixtiyoriy)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.telegram_id}
+                        onChange={(e) => setFormData({ ...formData, telegram_id: e.target.value })}
+                        placeholder="Masalan: 123456789"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Til</label>
+                      <select
+                        className="form-control"
+                        value={formData.language}
+                        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      >
+                        <option value="uz">Lotincha (O'zbek)</option>
+                        <option value="oz">Kirillcha (Ўзбек)</option>
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                /* --- BOT USER FORM --- */
-                <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                  <div className="form-group">
-                    <label>Ismi *</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-control"
-                      value={formData.first_name}
-                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                      placeholder="Masalan: Ali"
-                    />
+                /* --- CLIENT FORM --- */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{
+                    padding: '0.6rem 0.85rem',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.25)',
+                    fontSize: '0.82rem',
+                    color: '#3b82f6',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    fontWeight: 600
+                  }}>
+                    <Briefcase size={16} /> 👔 Ish Beruvchi / Mijoz Ma'lumotlari
                   </div>
 
-                  <div className="form-group">
-                    <label>Familiyasi</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.last_name}
-                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                      placeholder="Masalan: Valiyev"
-                    />
-                  </div>
+                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                    <div className="form-group">
+                      <label>Ismi *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-control"
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        placeholder="Masalan: Ali"
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label>Telefon Raqam *</label>
-                    <input
-                      type="text"
-                      required
-                      className="form-control"
-                      value={formData.phone_number}
-                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                      placeholder="+998901234567"
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>Familiyasi</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.last_name}
+                        onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                        placeholder="Masalan: Valiyev"
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label>Rol *</label>
-                    <select
-                      className="form-control"
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    >
-                      <option value="CLIENT">👔 Ish Beruvchi / Mijoz</option>
-                      <option value="WORKER">👷 Usta / Mutaxassis</option>
-                    </select>
-                  </div>
+                    <div className="form-group">
+                      <label>Telefon Raqam *</label>
+                      <input
+                        type="text"
+                        required
+                        className="form-control"
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                        placeholder="+998901234567"
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label>Telegram ID (ixtiyoriy)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.telegram_id}
-                      onChange={(e) => setFormData({ ...formData, telegram_id: e.target.value })}
-                      placeholder="Masalan: 123456789"
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>Rol *</label>
+                      <select
+                        className="form-control"
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      >
+                        <option value="CLIENT">👔 Ish Beruvchi / Mijoz</option>
+                        <option value="WORKER">👷 Usta / Mutaxassis</option>
+                      </select>
+                    </div>
 
-                  <div className="form-group">
-                    <label>Til</label>
-                    <select
-                      className="form-control"
-                      value={formData.language}
-                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                    >
-                      <option value="uz">Lotincha (O'zbek)</option>
-                      <option value="oz">Kirillcha (Ўзбек)</option>
-                      <option value="ru">Русский</option>
-                      <option value="en">English</option>
-                    </select>
-                  </div>
+                    <div className="form-group">
+                      <label>Tuman / Hudud</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.district}
+                        onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                        placeholder="Masalan: Chilonzor, Yunusobod..."
+                      />
+                    </div>
 
-                  {formData.role === 'WORKER' && (
-                    <>
-                      <div className="form-group">
-                        <label>Mutaxassislik / Kasbi</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={formData.specialty}
-                          onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                          placeholder="Masalan: Santexnik, Elektrik..."
-                        />
-                      </div>
+                    <div className="form-group">
+                      <label>Kreditlar Soni</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-control"
+                        value={formData.job_credits}
+                        onChange={(e) => setFormData({ ...formData, job_credits: parseInt(e.target.value) || 0 })}
+                      />
+                    </div>
 
-                      <div className="form-group">
-                        <label>Ish Grafiki</label>
-                        <select
-                          className="form-control"
-                          value={formData.work_schedule}
-                          onChange={(e) => setFormData({ ...formData, work_schedule: e.target.value })}
-                        >
-                          <option value="24_7">🔥 24/7 Shoshilinch</option>
-                          <option value="day_shift">☀️ Kunduzgi (09:00 - 18:00)</option>
-                          <option value="flexible">⏱️ Erkin grafik</option>
-                        </select>
-                      </div>
-                    </>
-                  )}
+                    <div className="form-group">
+                      <label>Telegram ID (ixtiyoriy)</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.telegram_id}
+                        onChange={(e) => setFormData({ ...formData, telegram_id: e.target.value })}
+                        placeholder="Masalan: 123456789"
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label>Tuman / Hudud</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      placeholder="Masalan: Chilonzor, Yunusobod..."
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>Kreditlar Soni</label>
-                    <input
-                      type="number"
-                      min="0"
-                      className="form-control"
-                      value={formData.job_credits}
-                      onChange={(e) => setFormData({ ...formData, job_credits: parseInt(e.target.value) || 0 })}
-                    />
+                    <div className="form-group">
+                      <label>Til</label>
+                      <select
+                        className="form-control"
+                        value={formData.language}
+                        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      >
+                        <option value="uz">Lotincha (O'zbek)</option>
+                        <option value="oz">Kirillcha (Ўзбек)</option>
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
