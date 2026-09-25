@@ -38,8 +38,26 @@ import {
   UserX,
   Globe,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ShieldCheck,
+  Lock,
+  CheckSquare,
+  Square
 } from 'lucide-react';
+
+const AVAILABLE_TABS = [
+  { id: 'analytics', label: 'Boshqaruv Analitikasi', icon: '📊' },
+  { id: 'job_posts', label: 'Ish E\'lonlari & Vakansiyalar', icon: '💼' },
+  { id: 'audience', label: 'Foydalanuvchilar Bazasi', icon: '👥' },
+  { id: 'broadcast', label: 'Ommaviy Xabarnoma', icon: '📢' },
+  { id: 'bot_control', label: 'Telegram Bot Boshqaruvi', icon: '🤖' },
+  { id: 'categories', label: 'Kasblar & Kategoriyalar', icon: '🗂️' },
+  { id: 'workers', label: 'Usta va Mutaxassislar', icon: '🛠️' },
+  { id: 'feedbacks', label: 'Taklif va Shikoyatlar', icon: '💬' },
+  { id: 'callcenter', label: 'Call Center & Buyurtmalar', icon: '🎧' },
+  { id: 'livemap', label: 'Jonli Xarita & GPS', icon: '📍' },
+  { id: 'settings', label: 'Tizim Sozlamalari', icon: '⚙️' },
+];
 
 export default function BotAudienceManager() {
   const [users, setUsers] = useState([]);
@@ -47,7 +65,7 @@ export default function BotAudienceManager() {
   const [positions, setPositions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'WORKER' | 'CLIENT'
+  const [roleFilter, setRoleFilter] = useState('ALL'); // 'ALL' | 'WORKER' | 'CLIENT' | 'ADMIN'
   const [botFilter, setBotFilter] = useState('ALL'); // 'ALL' | 'CLIENT_BOT' | 'WORKER_BOT' | 'BOTH'
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -68,7 +86,9 @@ export default function BotAudienceManager() {
 
   // Form State (for Create & Edit)
   const [formData, setFormData] = useState({
+    account_type: 'BOT_USER', // 'BOT_USER' | 'STAFF_USER'
     username: '',
+    password: '',
     first_name: '',
     last_name: '',
     phone_number: '+99890',
@@ -87,7 +107,9 @@ export default function BotAudienceManager() {
     work_schedule: '24_7',
     job_credits: 3,
     is_online: true,
-    is_registered: true
+    is_registered: true,
+    is_staff: false,
+    allowed_tabs: AVAILABLE_TABS.map(t => t.id)
   });
 
   const loadInitialData = async () => {
@@ -146,13 +168,16 @@ export default function BotAudienceManager() {
   };
 
   // Open Create Modal
-  const handleOpenAddModal = () => {
+  const handleOpenAddModal = (type = 'STAFF_USER') => {
+    setEditingUser(null);
     setFormData({
-      username: `user_${Date.now()}`,
+      account_type: type,
+      username: type === 'STAFF_USER' ? '' : `user_${Date.now()}`,
+      password: '',
       first_name: '',
       last_name: '',
       phone_number: '+99890',
-      role: 'CLIENT',
+      role: type === 'STAFF_USER' ? 'ADMIN' : 'CLIENT',
       language: 'uz',
       telegram_id: '',
       gender: '',
@@ -167,7 +192,9 @@ export default function BotAudienceManager() {
       work_schedule: '24_7',
       job_credits: 3,
       is_online: true,
-      is_registered: true
+      is_registered: true,
+      is_staff: type === 'STAFF_USER',
+      allowed_tabs: AVAILABLE_TABS.map(t => t.id)
     });
     setModalFeedback(null);
     setIsAddModalOpen(true);
@@ -176,12 +203,22 @@ export default function BotAudienceManager() {
   // Open Edit Modal
   const handleOpenEditModal = (u) => {
     setEditingUser(u);
+    const isStaff = Boolean(u.is_staff || u.role === 'ADMIN' || u.role === 'CALL_CENTER' || u.is_superuser);
+    let tabs = [];
+    if (!u.allowed_tabs || u.allowed_tabs === 'all' || u.is_superuser) {
+      tabs = AVAILABLE_TABS.map(t => t.id);
+    } else {
+      tabs = u.allowed_tabs.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
     setFormData({
+      account_type: isStaff ? 'STAFF_USER' : 'BOT_USER',
       username: u.username || '',
+      password: '',
       first_name: u.first_name || '',
       last_name: u.last_name || '',
       phone_number: u.phone_number || '',
-      role: u.role || 'CLIENT',
+      role: u.role || (isStaff ? 'ADMIN' : 'CLIENT'),
       language: u.language || 'uz',
       telegram_id: u.telegram_id || '',
       gender: u.gender || '',
@@ -196,9 +233,30 @@ export default function BotAudienceManager() {
       work_schedule: u.work_schedule || '24_7',
       job_credits: u.job_credits ?? 3,
       is_online: u.is_online ?? true,
-      is_registered: u.is_registered ?? true
+      is_registered: u.is_registered ?? true,
+      is_staff: isStaff,
+      allowed_tabs: tabs
     });
     setModalFeedback(null);
+  };
+
+  const toggleTabPermission = (tabId) => {
+    setFormData(prev => {
+      const exists = prev.allowed_tabs.includes(tabId);
+      if (exists) {
+        return { ...prev, allowed_tabs: prev.allowed_tabs.filter(t => t !== tabId) };
+      } else {
+        return { ...prev, allowed_tabs: [...prev.allowed_tabs, tabId] };
+      }
+    });
+  };
+
+  const handleSelectAllTabs = () => {
+    if (formData.allowed_tabs.length === AVAILABLE_TABS.length) {
+      setFormData(prev => ({ ...prev, allowed_tabs: [] }));
+    } else {
+      setFormData(prev => ({ ...prev, allowed_tabs: AVAILABLE_TABS.map(t => t.id) }));
+    }
   };
 
   // Save (Create or Update)
@@ -209,6 +267,19 @@ export default function BotAudienceManager() {
 
     try {
       const payload = { ...formData };
+      delete payload.account_type;
+
+      if (formData.account_type === 'STAFF_USER' || formData.role === 'ADMIN' || formData.role === 'CALL_CENTER') {
+        payload.is_staff = true;
+        payload.allowed_tabs = formData.allowed_tabs.length === AVAILABLE_TABS.length ? 'all' : formData.allowed_tabs.join(',');
+        if (!formData.password || !formData.password.trim()) {
+          delete payload.password;
+        }
+      } else {
+        delete payload.allowed_tabs;
+        delete payload.password;
+      }
+
       if (!payload.telegram_id) delete payload.telegram_id;
       if (!payload.category) delete payload.category;
       if (!payload.position) delete payload.position;
@@ -219,7 +290,7 @@ export default function BotAudienceManager() {
         setModalFeedback({ type: 'success', message: 'Foydalanuvchi ma\'lumotlari muvaffaqiyatli yangilandi!' });
       } else {
         await createUser(payload);
-        setModalFeedback({ type: 'success', message: 'Yangi foydalanuvchi muvaffaqiyatli yaratildi!' });
+        setModalFeedback({ type: 'success', message: 'Yangi foydalanuvchi / xodim muvaffaqiyatli yaratildi!' });
       }
 
       await loadUsers();
@@ -229,7 +300,13 @@ export default function BotAudienceManager() {
       }, 1000);
     } catch (err) {
       console.error(err);
-      const msg = err.response?.data?.error || JSON.stringify(err.response?.data) || 'Saqlashda xatolik yuz berdi!';
+      const data = err.response?.data;
+      let msg = 'Saqlashda xatolik yuz berdi!';
+      if (typeof data === 'object' && data !== null) {
+        msg = Object.entries(data).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
+      } else if (err.response?.data?.error) {
+        msg = err.response.data.error;
+      }
       setModalFeedback({ type: 'error', message: msg });
     } finally {
       setModalSaving(false);
@@ -350,14 +427,18 @@ export default function BotAudienceManager() {
             </p>
           </div>
 
-          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <button className="btn btn-secondary" onClick={loadUsers} disabled={loading}>
               <RefreshCw size={14} className={loading ? 'spin' : ''} />
               <span>Yangilash</span>
             </button>
-            <button className="btn" onClick={handleOpenAddModal} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <button className="btn btn-secondary" onClick={() => handleOpenAddModal('BOT_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
               <UserPlus size={15} />
-              <span>Yangi Foydalanuvchi</span>
+              <span>+ Bot Foydalanuvchi</span>
+            </button>
+            <button className="btn" onClick={() => handleOpenAddModal('STAFF_USER')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}>
+              <ShieldCheck size={16} />
+              <span>+ Yangi Dashboard User (Xodim)</span>
             </button>
           </div>
         </div>
@@ -563,14 +644,14 @@ export default function BotAudienceManager() {
                       <td>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
                           <span style={{ 
-                            fontWeight: 600, 
+                            fontWeight: 700, 
                             fontSize: '0.82rem', 
-                            color: u.role === 'WORKER' ? '#10b981' : '#3b82f6' 
+                            color: u.is_superuser ? '#fbbf24' : (u.role === 'ADMIN' || u.is_staff ? '#a855f7' : (u.role === 'CALL_CENTER' ? '#06b6d4' : (u.role === 'WORKER' ? '#10b981' : '#3b82f6'))) 
                           }}>
-                            {u.role === 'WORKER' ? '👷 Usta / Mutaxassis' : '👔 Ish Beruvchi'}
+                            {u.is_superuser ? '👑 Super Admin' : (u.role === 'ADMIN' || u.is_staff ? '🛡️ Dashboard Admin' : (u.role === 'CALL_CENTER' ? '🎧 Call Center' : (u.role === 'WORKER' ? '👷 Usta / Mutaxassis' : '👔 Ish Beruvchi')))}
                           </span>
                           <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>
-                            {u.specialty || u.position_details?.name || 'Kiritilmagan'}
+                            {u.is_superuser ? 'Barcha huquqlar' : (u.is_staff || u.role === 'ADMIN' || u.role === 'CALL_CENTER' ? (u.allowed_tabs === 'all' || !u.allowed_tabs ? 'Barcha bo\'limlar' : `${u.allowed_tabs.split(',').length} ta bo'lim`) : (u.specialty || u.position_details?.name || 'Kiritilmagan'))}
                           </span>
                         </div>
                       </td>
@@ -900,18 +981,94 @@ export default function BotAudienceManager() {
       {/* --- MODAL 2: CREATE / EDIT USER MODAL --- */}
       {(isAddModalOpen || editingUser) && (
         <div className="modal-backdrop" onClick={() => { setIsAddModalOpen(false); setEditingUser(null); }}>
-          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '620px' }}>
+          <div className="modal-card" onClick={e => e.stopPropagation()} style={{ maxWidth: '680px', maxHeight: '90vh', overflowY: 'auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <UserPlus size={20} color="#3b82f6" />
+                {formData.account_type === 'STAFF_USER' ? (
+                  <ShieldCheck size={22} color="#3b82f6" />
+                ) : (
+                  <UserPlus size={20} color="#3b82f6" />
+                )}
                 <h3 className="card-title" style={{ margin: 0 }}>
-                  {editingUser ? "Foydalanuvchi Ma'lumotlarini Tahrirlash" : "Yangi Foydalanuvchi Yaratish"}
+                  {editingUser 
+                    ? (formData.account_type === 'STAFF_USER' ? `Dashboard Xodimini Tahrirlash: @${formData.username}` : "Foydalanuvchi Ma'lumotlarini Tahrirlash")
+                    : (formData.account_type === 'STAFF_USER' ? "Yangi Dashboard Xodimi (Sub-Admin) Yaratish" : "Yangi Foydalanuvchi Yaratish")
+                  }
                 </h3>
               </div>
               <button onClick={() => { setIsAddModalOpen(false); setEditingUser(null); }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={18} />
               </button>
             </div>
+
+            {/* Account Type Switcher (only when creating or when allowed to switch) */}
+            {!editingUser && (
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '0.5rem',
+                backgroundColor: 'var(--bg-inner)',
+                padding: '0.35rem',
+                borderRadius: '10px',
+                marginBottom: '1.25rem',
+                border: '1px solid var(--border-color)'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ 
+                    ...prev, 
+                    account_type: 'STAFF_USER', 
+                    role: 'ADMIN', 
+                    is_staff: true, 
+                    username: '' 
+                  }))}
+                  style={{
+                    padding: '0.6rem 0.8rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    backgroundColor: formData.account_type === 'STAFF_USER' ? 'var(--primary)' : 'transparent',
+                    color: formData.account_type === 'STAFF_USER' ? '#fff' : 'var(--text-muted)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <ShieldCheck size={16} /> 🛡️ Dashboard Xodimi
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ 
+                    ...prev, 
+                    account_type: 'BOT_USER', 
+                    role: 'CLIENT', 
+                    is_staff: false, 
+                    username: `user_${Date.now()}` 
+                  }))}
+                  style={{
+                    padding: '0.6rem 0.8rem',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontWeight: 700,
+                    fontSize: '0.85rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    backgroundColor: formData.account_type === 'BOT_USER' ? 'var(--primary)' : 'transparent',
+                    color: formData.account_type === 'BOT_USER' ? '#fff' : 'var(--text-muted)',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Users size={16} /> 📱 Telegram Bot Foydalanuvchisi
+                </button>
+              </div>
+            )}
 
             {modalFeedback && (
               <div style={{
@@ -929,133 +1086,295 @@ export default function BotAudienceManager() {
             )}
 
             <form onSubmit={handleSaveUserForm}>
-              <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
-                
-                <div className="form-group">
-                  <label>Ismi *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    placeholder="Masalan: Ali"
-                  />
-                </div>
+              {formData.account_type === 'STAFF_USER' ? (
+                /* --- STAFF / SUB-ADMIN USER FORM --- */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  
+                  {/* Security Notice */}
+                  <div style={{
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '8px',
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                    border: '1px solid rgba(59, 130, 246, 0.2)',
+                    fontSize: '0.82rem',
+                    color: 'var(--text-main)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    <Clock size={16} color="var(--primary)" style={{ flexShrink: 0 }} />
+                    <span>Ushbu xodim admin panelga kirishi mumkin va sessiya muddati xavfsizlik uchun <strong>10 daqiqa</strong> etib belgilanadi.</span>
+                  </div>
 
-                <div className="form-group">
-                  <label>Familiyasi</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    placeholder="Masalan: Valiyev"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Telefon Raqam *</label>
-                  <input
-                    type="text"
-                    required
-                    className="form-control"
-                    value={formData.phone_number}
-                    onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
-                    placeholder="+998901234567"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Rol *</label>
-                  <select
-                    className="form-control"
-                    value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                  >
-                    <option value="CLIENT">👔 Ish Beruvchi / Mijoz</option>
-                    <option value="WORKER">👷 Usta / Mutaxassis</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Telegram ID (ixtiyoriy)</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.telegram_id}
-                    onChange={(e) => setFormData({ ...formData, telegram_id: e.target.value })}
-                    placeholder="Masalan: 123456789"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Til</label>
-                  <select
-                    className="form-control"
-                    value={formData.language}
-                    onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  >
-                    <option value="uz">Lotincha (O'zbek)</option>
-                    <option value="oz">Kirillcha (Ўзбек)</option>
-                    <option value="ru">Русский</option>
-                    <option value="en">English</option>
-                  </select>
-                </div>
-
-                {formData.role === 'WORKER' && (
-                  <>
+                  <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
                     <div className="form-group">
-                      <label>Mutaxassislik / Kasbi</label>
+                      <label>Login (Foydalanuvchi nomi) *</label>
                       <input
                         type="text"
+                        required
                         className="form-control"
-                        value={formData.specialty}
-                        onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
-                        placeholder="Masalan: Santexnik, Elektrik..."
+                        value={formData.username}
+                        onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                        placeholder="Masalan: sardor_admin"
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>Ish Grafiki</label>
+                      <label>{editingUser ? "Yangi Parol (O'zgartirmaslik uchun bo'sh qoldiring)" : "Parol *"}</label>
+                      <input
+                        type="text"
+                        required={!editingUser}
+                        className="form-control"
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="Kamida 4 ta belgi"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Ism / Familiya</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.first_name}
+                        onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                        placeholder="Masalan: Sardor Aliyev"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Telefon Raqam</label>
+                      <input
+                        type="text"
+                        className="form-control"
+                        value={formData.phone_number}
+                        onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                        placeholder="+998901234567"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Rol *</label>
                       <select
                         className="form-control"
-                        value={formData.work_schedule}
-                        onChange={(e) => setFormData({ ...formData, work_schedule: e.target.value })}
+                        value={formData.role}
+                        onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                       >
-                        <option value="24_7">🔥 24/7 Shoshilinch</option>
-                        <option value="day_shift">☀️ Kunduzgi (09:00 - 18:00)</option>
-                        <option value="flexible">⏱️ Erkin grafik</option>
+                        <option value="ADMIN">🛡️ Boshqaruvchi / Admin</option>
+                        <option value="CALL_CENTER">🎧 Call Center / Operator</option>
                       </select>
                     </div>
-                  </>
-                )}
 
-                <div className="form-group">
-                  <label>Tuman / Hudud</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.district}
-                    onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                    placeholder="Masalan: Chilonzor, Yunusobod..."
-                  />
+                    <div className="form-group">
+                      <label>Til</label>
+                      <select
+                        className="form-control"
+                        value={formData.language}
+                        onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                      >
+                        <option value="uz">Lotincha (O'zbek)</option>
+                        <option value="oz">Kirillcha (Ўзбек)</option>
+                        <option value="ru">Русский</option>
+                        <option value="en">English</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Permissions Selection */}
+                  <div style={{ marginTop: '0.5rem', borderTop: '1px solid var(--border-color)', paddingTop: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                      <label style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-main)' }}>
+                        Ruxsat etilgan bo'limlar (Tab Permissions)
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleSelectAllTabs}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary)',
+                          fontSize: '0.82rem',
+                          fontWeight: 600,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {formData.allowed_tabs.length === AVAILABLE_TABS.length ? "Barchasini bekor qilish" : "Barchasini belgilash"}
+                      </button>
+                    </div>
+
+                    <div style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                      gap: '0.5rem',
+                      maxHeight: '200px',
+                      overflowY: 'auto',
+                      padding: '0.5rem',
+                      borderRadius: '8px',
+                      backgroundColor: 'var(--bg-inner)'
+                    }}>
+                      {AVAILABLE_TABS.map(tab => {
+                        const isChecked = formData.allowed_tabs.includes(tab.id);
+                        return (
+                          <div
+                            key={tab.id}
+                            onClick={() => toggleTabPermission(tab.id)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '6px',
+                              cursor: 'pointer',
+                              backgroundColor: isChecked ? 'rgba(59, 130, 246, 0.12)' : 'transparent',
+                              border: `1px solid ${isChecked ? 'rgba(59, 130, 246, 0.3)' : 'var(--border-color)'}`,
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => {}} // Handled by div onClick
+                              style={{ cursor: 'pointer' }}
+                            />
+                            <span style={{ fontSize: '0.88rem' }}>{tab.icon}</span>
+                            <span style={{ fontSize: '0.82rem', fontWeight: isChecked ? 600 : 400, color: isChecked ? 'var(--primary)' : 'var(--text-main)' }}>
+                              {tab.label}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                 </div>
+              ) : (
+                /* --- BOT USER FORM --- */
+                <div className="form-grid" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="form-group">
+                    <label>Ismi *</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-control"
+                      value={formData.first_name}
+                      onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
+                      placeholder="Masalan: Ali"
+                    />
+                  </div>
 
-                <div className="form-group">
-                  <label>Kreditlar Soni</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-control"
-                    value={formData.job_credits}
-                    onChange={(e) => setFormData({ ...formData, job_credits: parseInt(e.target.value) || 0 })}
-                  />
+                  <div className="form-group">
+                    <label>Familiyasi</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formData.last_name}
+                      onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+                      placeholder="Masalan: Valiyev"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Telefon Raqam *</label>
+                    <input
+                      type="text"
+                      required
+                      className="form-control"
+                      value={formData.phone_number}
+                      onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
+                      placeholder="+998901234567"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Rol *</label>
+                    <select
+                      className="form-control"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    >
+                      <option value="CLIENT">👔 Ish Beruvchi / Mijoz</option>
+                      <option value="WORKER">👷 Usta / Mutaxassis</option>
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Telegram ID (ixtiyoriy)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formData.telegram_id}
+                      onChange={(e) => setFormData({ ...formData, telegram_id: e.target.value })}
+                      placeholder="Masalan: 123456789"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Til</label>
+                    <select
+                      className="form-control"
+                      value={formData.language}
+                      onChange={(e) => setFormData({ ...formData, language: e.target.value })}
+                    >
+                      <option value="uz">Lotincha (O'zbek)</option>
+                      <option value="oz">Kirillcha (Ўзбек)</option>
+                      <option value="ru">Русский</option>
+                      <option value="en">English</option>
+                    </select>
+                  </div>
+
+                  {formData.role === 'WORKER' && (
+                    <>
+                      <div className="form-group">
+                        <label>Mutaxassislik / Kasbi</label>
+                        <input
+                          type="text"
+                          className="form-control"
+                          value={formData.specialty}
+                          onChange={(e) => setFormData({ ...formData, specialty: e.target.value })}
+                          placeholder="Masalan: Santexnik, Elektrik..."
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Ish Grafiki</label>
+                        <select
+                          className="form-control"
+                          value={formData.work_schedule}
+                          onChange={(e) => setFormData({ ...formData, work_schedule: e.target.value })}
+                        >
+                          <option value="24_7">🔥 24/7 Shoshilinch</option>
+                          <option value="day_shift">☀️ Kunduzgi (09:00 - 18:00)</option>
+                          <option value="flexible">⏱️ Erkin grafik</option>
+                        </select>
+                      </div>
+                    </>
+                  )}
+
+                  <div className="form-group">
+                    <label>Tuman / Hudud</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={formData.district}
+                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                      placeholder="Masalan: Chilonzor, Yunusobod..."
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Kreditlar Soni</label>
+                    <input
+                      type="number"
+                      min="0"
+                      className="form-control"
+                      value={formData.job_credits}
+                      onChange={(e) => setFormData({ ...formData, job_credits: parseInt(e.target.value) || 0 })}
+                    />
+                  </div>
                 </div>
+              )}
 
-              </div>
-
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
                 <button
                   type="button"
                   className="btn btn-secondary"
@@ -1068,10 +1387,10 @@ export default function BotAudienceManager() {
                   type="submit"
                   className="btn"
                   disabled={modalSaving}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 700 }}
                 >
                   <Save size={15} />
-                  {modalSaving ? 'Saqlanmoqda...' : 'Saqlash'}
+                  {modalSaving ? 'Saqlanmoqda...' : editingUser ? "O'zgarishlarni Saqlash" : (formData.account_type === 'STAFF_USER' ? "Dashboard Xodimini Yaratish" : "Foydalanuvchini Saqlash")}
                 </button>
               </div>
             </form>
