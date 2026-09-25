@@ -1,4 +1,4 @@
-from rest_framework import views, status, permissions, generics
+from rest_framework import views, status, permissions, generics, exceptions
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
@@ -181,6 +181,11 @@ class WorkerDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = UserSerializer
     queryset = User.objects.filter(role=User.Role.WORKER)
 
+    def perform_destroy(self, instance):
+        if instance.is_superuser or instance.is_staff or instance.role == User.Role.ADMIN:
+            raise exceptions.ValidationError({'error': "Super admin yoki Admin hisobini o'chirib bo'lmaydi! Faqat tahrirlash mumkin."})
+        super().perform_destroy(instance)
+
 class RegisterWorkerView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = RegisterWorkerSerializer
@@ -236,6 +241,11 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = UserSerializer
     queryset = User.objects.all().prefetch_related('selected_positions').select_related('region', 'category', 'position')
+
+    def perform_destroy(self, instance):
+        if instance.is_superuser or instance.is_staff or instance.role == User.Role.ADMIN:
+            raise exceptions.ValidationError({'error': "Super admin yoki Admin hisobini o'chirib bo'lmaydi! Faqat tahrirlash mumkin."})
+        super().perform_destroy(instance)
 
 class UpdateUserCreditsView(views.APIView):
     permission_classes = [permissions.AllowAny]

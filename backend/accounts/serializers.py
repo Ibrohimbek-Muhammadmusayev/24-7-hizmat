@@ -54,12 +54,13 @@ class UserSerializer(serializers.ModelSerializer):
             'custom_category', 'custom_position',
             'employment_type', 'work_schedule',
             'is_online', 'is_busy', 'is_registered', 'notification_setting',
+            'is_superuser', 'is_staff',
             'specialty', 'rating', 'completed_jobs_count', 'fcm_token', 'job_credits', 
             'started_client_bot', 'started_worker_bot',
             'needs_profile_update', 'profile_update_reason', 'profile_update_fields',
             'portfolio_items', 'received_reviews', 'date_joined'
         ]
-        read_only_fields = ['id', 'date_joined']
+        read_only_fields = ['id', 'date_joined', 'is_superuser', 'is_staff']
 
     def get_region_name(self, obj):
         return obj.region.name if obj.region else None

@@ -670,14 +670,32 @@ export default function BotAudienceManager() {
                           >
                             <Edit3 size={13} color="#3b82f6" />
                           </button>
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => setDeleteConfirmUser(u)}
-                            title="O'chirish"
-                            style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {!(u.is_superuser || u.is_staff || u.role === 'ADMIN') ? (
+                            <button
+                              className="btn btn-secondary"
+                              onClick={() => setDeleteConfirmUser(u)}
+                              title="O'chirish"
+                              style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          ) : (
+                            <span 
+                              title="Super Admin / Admin hisobini o'chirib bo'lmaydi (Faqat tahrirlash mumkin)" 
+                              style={{ 
+                                padding: '0.35rem 0.5rem', 
+                                fontSize: '0.76rem', 
+                                color: '#10b981', 
+                                background: 'rgba(16, 185, 129, 0.1)', 
+                                border: '1px solid rgba(16, 185, 129, 0.25)', 
+                                borderRadius: '6px',
+                                display: 'inline-flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <Shield size={13} />
+                            </span>
+                          )}
                         </div>
                       </td>
                     </tr>
