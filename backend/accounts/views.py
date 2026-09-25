@@ -27,9 +27,21 @@ class LoginView(views.APIView):
             user = authenticate(username=username, password=password)
             if user:
                 refresh = RefreshToken.for_user(user)
+                access_token = refresh.access_token
+
+                # Non-superuser (operator/sub-admin) sessions expire after 10 minutes
+                if not user.is_superuser:
+                    from datetime import timedelta
+                    access_token.set_exp(lifetime=timedelta(minutes=10))
+                    refresh.set_exp(lifetime=timedelta(minutes=10))
+                    expires_in = 600
+                else:
+                    expires_in = 86400 * 30  # 30 days for super admin
+
                 return Response({
                     'refresh': str(refresh),
-                    'access': str(refresh.access_token),
+                    'access': str(access_token),
+                    'expires_in': expires_in,
                     'user': UserSerializer(user).data
                 })
             return Response({'error': 'Login yoki parol noto\'g\'ri'}, status=status.HTTP_401_UNAUTHORIZED)

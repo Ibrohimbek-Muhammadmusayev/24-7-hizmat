@@ -640,27 +640,7 @@ export default function BotAudienceManager() {
                           >
                             <Eye size={13} color="#06b6d4" />
                           </button>
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => handleOpenCreditModal(u)}
-                            title="Kredit tahrirlash"
-                            style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
-                          >
-                            <Coins size={13} color="#f59e0b" />
-                          </button>
-                          <button
-                            className="btn btn-secondary"
-                            onClick={() => handleOpenRequestUpdateModal(u)}
-                            title="Ma'lumotlarni qayta to'ldirishga yuborish"
-                            style={{ 
-                              padding: '0.35rem 0.5rem', 
-                              fontSize: '0.76rem',
-                              color: u.needs_profile_update ? '#ef4444' : '#f59e0b',
-                              borderColor: u.needs_profile_update ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'
-                            }}
-                          >
-                            <RotateCcw size={13} />
-                          </button>
+
                           <button
                             className="btn btn-secondary"
                             onClick={() => handleOpenEditModal(u)}
@@ -669,31 +649,76 @@ export default function BotAudienceManager() {
                           >
                             <Edit3 size={13} color="#3b82f6" />
                           </button>
-                          {!(u.is_superuser || u.is_staff || u.role === 'ADMIN') ? (
-                            <button
-                              className="btn btn-secondary"
-                              onClick={() => setDeleteConfirmUser(u)}
-                              title="O'chirish"
-                              style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                          ) : (
+
+                          {/* Super Admin uchun boshqa amallar (kredit, qayta to'ldirish, o'chirish) yopiq */}
+                          {u.is_superuser ? (
                             <span 
-                              title="Super Admin / Admin hisobini o'chirib bo'lmaydi (Faqat tahrirlash mumkin)" 
+                              title="Super Admin hisobi daxlsiz (Faqat tahrirlash mumkin)" 
                               style={{ 
-                                padding: '0.35rem 0.5rem', 
-                                fontSize: '0.76rem', 
-                                color: '#10b981', 
-                                background: 'rgba(16, 185, 129, 0.1)', 
-                                border: '1px solid rgba(16, 185, 129, 0.25)', 
+                                padding: '0.35rem 0.6rem', 
+                                fontSize: '0.74rem', 
+                                color: '#fbbf24', 
+                                background: 'rgba(251, 191, 36, 0.12)', 
+                                border: '1px solid rgba(251, 191, 36, 0.3)', 
                                 borderRadius: '6px',
                                 display: 'inline-flex',
-                                alignItems: 'center'
+                                alignItems: 'center',
+                                gap: '0.25rem',
+                                fontWeight: 700
                               }}
                             >
-                              <Shield size={13} />
+                              👑 Super Admin
                             </span>
+                          ) : (
+                            <>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => handleOpenCreditModal(u)}
+                                title="Kredit tahrirlash"
+                                style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem' }}
+                              >
+                                <Coins size={13} color="#f59e0b" />
+                              </button>
+                              <button
+                                className="btn btn-secondary"
+                                onClick={() => handleOpenRequestUpdateModal(u)}
+                                title="Ma'lumotlarni qayta to'ldirishga yuborish"
+                                style={{ 
+                                  padding: '0.35rem 0.5rem', 
+                                  fontSize: '0.76rem', 
+                                  color: u.needs_profile_update ? '#ef4444' : '#f59e0b',
+                                  borderColor: u.needs_profile_update ? 'rgba(239, 68, 68, 0.4)' : 'rgba(245, 158, 11, 0.4)'
+                                }}
+                              >
+                                <RotateCcw size={13} />
+                              </button>
+                              {!(u.is_staff || u.role === 'ADMIN') ? (
+                                <button
+                                  className="btn btn-secondary"
+                                  onClick={() => setDeleteConfirmUser(u)}
+                                  title="O'chirish"
+                                  style={{ padding: '0.35rem 0.5rem', fontSize: '0.76rem', color: '#ef4444', borderColor: 'rgba(239, 68, 68, 0.25)' }}
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              ) : (
+                                <span 
+                                  title="Admin hisobi (O'chirish mumkin emas)" 
+                                  style={{ 
+                                    padding: '0.35rem 0.5rem', 
+                                    fontSize: '0.76rem', 
+                                    color: '#10b981', 
+                                    background: 'rgba(16, 185, 129, 0.1)', 
+                                    border: '1px solid rgba(16, 185, 129, 0.25)', 
+                                    borderRadius: '6px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center'
+                                  }}
+                                >
+                                  <Shield size={13} />
+                                </span>
+                              )}
+                            </>
                           )}
                         </div>
                       </td>

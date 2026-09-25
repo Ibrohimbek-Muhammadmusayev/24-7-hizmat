@@ -15,7 +15,7 @@ import AddWorkerModal from './components/AddWorkerModal';
 import CreateOrderModal from './components/CreateOrderModal';
 import LoginModal from './components/LoginModal';
 import SettingsManager from './components/SettingsManager';
-import { Sun, Moon, RotateCw, LogOut, ShieldCheck, Headphones, User, Menu } from 'lucide-react';
+import { Sun, Moon, RotateCw, LogOut, ShieldCheck, Headphones, User, Menu, Crown } from 'lucide-react';
 
 import { fetchOrders, fetchWorkers, fetchLiveLocations, fetchOrderStats, fetchCategories, fetchJobPosts, fetchUsers } from './services/api';
 
@@ -53,9 +53,24 @@ export default function App() {
     setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
+  const isTabAllowed = (tabId) => {
+    if (!currentUser) return false;
+    if (currentUser.is_superuser) return true;
+    const allowedStr = currentUser.allowed_tabs || '';
+    if (allowedStr === 'all') return true;
+    const list = allowedStr.split(',').map(s => s.trim()).filter(Boolean);
+    if (list.length === 0) {
+      if (currentUser.role === 'CALL_CENTER') return ['callcenter', 'orders', 'livemap'].includes(tabId);
+      return ['analytics', 'job_posts', 'livemap', 'workers', 'audience'].includes(tabId);
+    }
+    return list.includes(tabId);
+  };
+
   const handleTabChange = (tab) => {
-    setActiveTab(tab);
-    localStorage.setItem('activeTab', tab);
+    if (isTabAllowed(tab)) {
+      setActiveTab(tab);
+      localStorage.setItem('activeTab', tab);
+    }
   };
 
   useEffect(() => {
@@ -79,6 +94,27 @@ export default function App() {
       }
     }
   }, []);
+
+  // Check tab permission on user load or tab change
+  useEffect(() => {
+    if (currentUser && !isTabAllowed(activeTab)) {
+      const fallbackTabs = ['analytics', 'job_posts', 'livemap', 'callcenter', 'audience', 'workers', 'settings'];
+      const firstAllowed = fallbackTabs.find(t => isTabAllowed(t)) || 'job_posts';
+      setActiveTab(firstAllowed);
+      localStorage.setItem('activeTab', firstAllowed);
+    }
+  }, [currentUser, activeTab]);
+
+  // 10-Minute session auto logout for sub-admins & operators
+  useEffect(() => {
+    if (currentUser && !currentUser.is_superuser) {
+      const tenMinutesMs = 10 * 60 * 1000;
+      const timer = setTimeout(() => {
+        handleLogoutWithMessage("Xavfsizlik yuzasidan xodim sessiyasi (10 daqiqa) tugadi. Iltimos, qaytadan tizimga kiring!");
+      }, tenMinutesMs);
+      return () => clearTimeout(timer);
+    }
+  }, [currentUser]);
 
   const loadData = async () => {
     try {
@@ -119,20 +155,23 @@ export default function App() {
   useEffect(() => {
     const handleExpired = (e) => {
       const msg = e?.detail?.message || "Sessiyangiz (token) muddati tugadi. Iltimos, qaytadan tizimga kiring!";
-      setSessionExpiredMessage(msg);
-      setCurrentUser(null);
+      handleLogoutWithMessage(msg);
     };
 
     window.addEventListener('auth:token_expired', handleExpired);
     return () => window.removeEventListener('auth:token_expired', handleExpired);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogoutWithMessage = (msg) => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('activeTab');
-    setSessionExpiredMessage(null);
+    setSessionExpiredMessage(msg);
     setCurrentUser(null);
+  };
+
+  const handleLogout = () => {
+    handleLogoutWithMessage(null);
   };
 
   if (!currentUser) {
@@ -153,6 +192,7 @@ export default function App() {
   }
 
   const userRole = currentUser.role || 'CALL_CENTER';
+  const isSuperUser = Boolean(currentUser.is_superuser);
 
   const tabTitles = {
     analytics: 'Boshqaruv Analitikasi & Moliyaviy KPI',
@@ -166,7 +206,7 @@ export default function App() {
     callcenter: 'Call Center & Tezkor Buyurtmalar',
     orders: 'Buyurtmalar & Dispatch Markazi',
     livemap: 'Jonli Xarita & GPS Monitoring',
-    settings: 'Tizim Sozlamalari & Xavfsizlik',
+    settings: isSuperUser ? 'Tizim & Xodimlar Sozlamasi' : 'Profil Sozlamalari',
   };
 
   return (
@@ -174,7 +214,7 @@ export default function App() {
       <Sidebar 
         activeTab={activeTab} 
         setActiveTab={handleTabChange} 
-        userRole={userRole} 
+        currentUser={currentUser}
         mobileOpen={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
       />
@@ -196,7 +236,7 @@ export default function App() {
                 {tabTitles[activeTab] || 'Boshqaruv Paneli'}
               </h1>
               <p className="header-subtitle">
-                Xush kelibsiz, <strong>{currentUser.first_name || currentUser.username}</strong> ({userRole === 'ADMIN' ? 'Administrator' : 'Call Center Operator'})
+                Xush kelibsiz, <strong>{currentUser.first_name || currentUser.username}</strong> ({isSuperUser ? 'Super Administrator' : (userRole === 'ADMIN' ? 'Menejer / Admin' : 'Call Center Operatori')})
               </p>
             </div>
           </div>
@@ -221,9 +261,9 @@ export default function App() {
               )}
             </button>
 
-            <span className={`badge header-role-badge ${userRole === 'ADMIN' ? 'badge-finished' : 'badge-dispatched'}`} style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '0.4rem' }}>
-              {userRole === 'ADMIN' ? <ShieldCheck size={14} /> : <Headphones size={14} />}
-              <span>{userRole === 'ADMIN' ? 'Administrator' : 'Operator'}</span>
+            <span className={`badge header-role-badge ${isSuperUser ? 'badge-in-progress' : (userRole === 'ADMIN' ? 'badge-finished' : 'badge-dispatched')}`} style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', gap: '0.4rem' }}>
+              {isSuperUser ? <Crown size={14} color="#fbbf24" /> : (userRole === 'ADMIN' ? <ShieldCheck size={14} /> : <Headphones size={14} />)}
+              <span>{isSuperUser ? 'Super Admin' : (userRole === 'ADMIN' ? 'Administrator' : 'Operator')}</span>
             </span>
 
             <button className="btn btn-secondary" onClick={loadData} title="Ma'lumotlarni yangilash">
@@ -244,41 +284,40 @@ export default function App() {
         </header>
 
         {/* 1. Admin & Operatsion Bo'limlar */}
-        {activeTab === 'analytics' && userRole === 'ADMIN' && (
+        {activeTab === 'analytics' && isTabAllowed('analytics') && (
           <ExecutiveAnalytics stats={stats} loading={refreshing && !stats.total_orders} />
         )}
 
-        {activeTab === 'job_posts' && (
+        {activeTab === 'job_posts' && isTabAllowed('job_posts') && (
           <JobPostsManager categories={categories} onRefresh={loadData} />
         )}
 
-        {activeTab === 'audience' && userRole === 'ADMIN' && (
-          <BotAudienceManager />
+        {activeTab === 'audience' && isTabAllowed('audience') && (
+          <BotAudienceManager currentUser={currentUser} />
         )}
 
-        {activeTab === 'broadcast' && userRole === 'ADMIN' && (
+        {activeTab === 'broadcast' && isTabAllowed('broadcast') && (
           <BroadcastManager />
         )}
 
-        {activeTab === 'bot_control' && userRole === 'ADMIN' && (
+        {activeTab === 'bot_control' && isTabAllowed('bot_control') && (
           <BotControlPanel />
         )}
 
-        {activeTab === 'categories' && userRole === 'ADMIN' && (
+        {activeTab === 'categories' && isTabAllowed('categories') && (
           <CategoriesManager categories={categories} onRefresh={loadData} loading={refreshing && categories.length === 0} />
         )}
 
-        {activeTab === 'workers' && (
+        {activeTab === 'workers' && isTabAllowed('workers') && (
           <AllWorkers workers={workers} onOpenAddWorkerModal={() => setIsAddWorkerModalOpen(true)} onRefresh={loadData} loading={refreshing && workers.length === 0} />
         )}
 
-        {activeTab === 'feedbacks' && userRole === 'ADMIN' && (
+        {activeTab === 'feedbacks' && isTabAllowed('feedbacks') && (
           <FeedbackManager />
         )}
 
-
         {/* 2. Call Center & Operativ Bo'limlar */}
-        {activeTab === 'callcenter' && (
+        {activeTab === 'callcenter' && isTabAllowed('callcenter') && (
           <PaymentOrderStatus 
             orders={orders} 
             loading={refreshing && orders.length === 0}
@@ -288,7 +327,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'orders' && (
+        {activeTab === 'orders' && isTabAllowed('orders') && (
           <PaymentOrderStatus 
             orders={orders} 
             loading={refreshing && orders.length === 0}
@@ -298,7 +337,7 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'livemap' && (
+        {activeTab === 'livemap' && isTabAllowed('livemap') && (
           <LiveMap 
             workers={workers} 
             locations={locations} 
@@ -309,10 +348,15 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'settings' && (
+        {activeTab === 'settings' && isTabAllowed('settings') && (
           <SettingsManager 
             currentUser={currentUser} 
-            onUserUpdated={(updated) => setCurrentUser(updated)} 
+            allUsers={allUsers}
+            onRefresh={loadData}
+            onUserUpdated={(updated) => {
+              setCurrentUser(updated);
+              localStorage.setItem('user', JSON.stringify(updated));
+            }} 
           />
         )}
 

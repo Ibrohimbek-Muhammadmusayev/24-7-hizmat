@@ -41,11 +41,12 @@ class UserSerializer(serializers.ModelSerializer):
     portfolio_items = WorkerPortfolioSerializer(many=True, read_only=True)
     received_reviews = WorkerReviewSerializer(many=True, read_only=True)
     region_name = serializers.SerializerMethodField()
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'first_name', 'last_name', 'phone_number', 
+            'id', 'username', 'password', 'first_name', 'last_name', 'phone_number', 
             'role', 'language', 'telegram_id', 'gender', 'age',
             'region', 'region_name', 'district', 'street_address', 
             'latitude', 'longitude', 'address_title',
@@ -54,7 +55,7 @@ class UserSerializer(serializers.ModelSerializer):
             'custom_category', 'custom_position',
             'employment_type', 'work_schedule',
             'is_online', 'is_busy', 'is_registered', 'notification_setting',
-            'is_superuser', 'is_staff',
+            'is_superuser', 'is_staff', 'allowed_tabs',
             'specialty', 'rating', 'completed_jobs_count', 'fcm_token', 'job_credits', 
             'started_client_bot', 'started_worker_bot',
             'needs_profile_update', 'profile_update_reason', 'profile_update_fields',
@@ -64,6 +65,26 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_region_name(self, obj):
         return obj.region.name if obj.region else None
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().create(validated_data)
+        if password:
+            user.set_password(password)
+        if user.role in [User.Role.ADMIN, User.Role.CALL_CENTER]:
+            user.is_staff = True
+        user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+        if user.role in [User.Role.ADMIN, User.Role.CALL_CENTER]:
+            user.is_staff = True
+        user.save()
+        return user
 
 class RegisterWorkerSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

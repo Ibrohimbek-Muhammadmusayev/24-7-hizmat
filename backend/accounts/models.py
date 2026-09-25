@@ -118,6 +118,9 @@ class User(AbstractUser):
     profile_update_reason = models.TextField(blank=True, null=True, verbose_name="Qayta to'ldirish sababi / Admin izohi")
     profile_update_fields = models.CharField(max_length=255, blank=True, null=True, verbose_name="Qayta to'ldirilishi kerak bo'lgan maydonlar (vergul bilan)")
 
+    # Admin Dashboard Permissions / Allowed Tabs (e.g. 'analytics,job_posts,live_map' or 'all')
+    allowed_tabs = models.CharField(max_length=500, blank=True, null=True, default='all', verbose_name="Ruxsat etilgan bo'limlar")
+
     def __str__(self):
         return f"{self.first_name or self.username} ({self.phone_number or self.telegram_id}) - {self.get_role_display()}"
 
