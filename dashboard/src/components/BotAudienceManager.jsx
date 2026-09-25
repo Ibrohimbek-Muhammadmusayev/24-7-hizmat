@@ -315,7 +315,6 @@ export default function BotAudienceManager() {
       setUsers(prev => prev.map(u => u.id === requestUpdateUser.id ? { 
         ...u, 
         needs_profile_update: true, 
-        is_registered: false, 
         profile_update_reason: updateReasonInput,
         profile_update_fields: selectedUpdateFields.join(',')
       } : u));

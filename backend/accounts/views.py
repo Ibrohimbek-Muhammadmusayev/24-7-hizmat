@@ -315,24 +315,24 @@ class RequestProfileUpdateView(views.APIView):
         user.needs_profile_update = True
         user.profile_update_reason = reason
         user.profile_update_fields = fields_str
-        user.is_registered = False  # Reset registration state so bot prompts for missing/targeted info
-        user.save(update_fields=['needs_profile_update', 'profile_update_reason', 'profile_update_fields', 'is_registered'])
+        user.save(update_fields=['needs_profile_update', 'profile_update_reason', 'profile_update_fields'])
 
         # Translate field names for friendly notification
         field_labels_map = {
-            'name': "Ism va Familiya",
-            'phone': "Telefon raqam",
-            'location': "Yashash manzili / GPS joylashuv",
-            'positions': "Soha va mutaxassisliklar",
-            'gender': "Jinsi",
-            'age': "Yoshi",
-            'work_schedule': "Bandlik turi va ish rejimi"
+            'name': "👤 Ism va familiya",
+            'phone': "📱 Telefon raqam",
+            'location': "📍 Yashash manzili / Joylashuv",
+            'positions': "🛠 Soha va mutaxassislik",
+            'gender_age': "⚧ Yosh va jins",
+            'gender': "⚧ Jinsi",
+            'age': "🎂 Yoshi",
+            'work_schedule': "⏱ Ish rejimi"
         }
         if fields_str != 'all':
             fields_human = ", ".join([field_labels_map.get(f, f) for f in fields_list])
-            fields_instruction = f"📌 <b>Qayta kiritilishi kerak bo'lgan ma'lumotlar:</b> <b>{fields_human}</b>"
+            fields_instruction = f"📌 <b>Yangilanadigan ma'lumot:</b> {fields_human}"
         else:
-            fields_instruction = "📌 <b>Barcha shaxsiy ma'lumotlarni qaytadan to'ldirish talab etiladi.</b>"
+            fields_instruction = "📌 <b>Profil ma'lumotlarini qayta tekshirib yangilash so'raladi.</b>"
 
         # Send Telegram notification if user has telegram_id
         if user.telegram_id:
@@ -350,13 +350,16 @@ class RequestProfileUpdateView(views.APIView):
 
                 if token:
                     bot_instance = Bot(token=token)
-                    reason_block = f"\n📝 <b>Sabab / Izoh:</b> <i>{reason}</i>\n" if reason else ""
+                    reason_block = f"\n📝 <b>Izoh:</b> <i>{reason}</i>\n" if reason else ""
+                    user_name = user.get_full_name() or user.first_name or "foydalanuvchi"
                     notice_text = (
-                        f"⚠️ <b>DIQQAT: Profil ma'lumotlaringizni yangilash talab qilinadi!</b>\n\n"
-                        f"Hurmatli <b>{user.get_full_name() or user.first_name}</b>, administrator tomonidan profilingizdagi quyidagi ma'lumotlarni qayta kiritish so'ralmoqda:\n\n"
-                        f"{fields_instruction}"
+                        f"ℹ️ <b>Profil ma'lumotlarini yangilash</b>\n\n"
+                        f"Assalomu alaykum, <b>{user_name}</b>!\n"
+                        f"Profilingizdagi quyidagi ma'lumotni yangilash so'ralmoqda:\n\n"
+                        f"{fields_instruction}\n"
                         f"{reason_block}\n"
-                        f"Iltimos, ma'lumotlarni to'g'rilash va faollashtirish uchun <b>/start</b> buyrug'ini yuboring."
+                        f"Ma'lumotni kiritish uchun bosing:\n"
+                        f"👉 <b>/start</b>"
                     )
                     async_to_sync(bot_instance.send_message)(
                         chat_id=user.telegram_id,

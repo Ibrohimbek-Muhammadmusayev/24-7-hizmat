@@ -106,6 +106,7 @@ def get_user_db_record(telegram_id: int):
         has_positions and 
         not user.needs_profile_update
     )
+    has_existing_profile = bool(user.is_registered and user.phone_number and user.first_name)
 
     return {
         'id': user.id,
@@ -113,10 +114,11 @@ def get_user_db_record(telegram_id: int):
         'first_name': user.first_name,
         'language': user.language or 'uz',
         'is_registered': is_fully_complete,
+        'has_existing_profile': has_existing_profile,
         'is_busy': user.is_busy,
         'role': user.role,
         'needs_profile_update': user.needs_profile_update,
-        'profile_update_reason': user.profile_update_reason,
+        'profile_update_reason': user.profile_update_reason or '',
         'profile_update_fields': user.profile_update_fields or '',
     }
 
@@ -834,11 +836,141 @@ def get_bot_settings_info():
 
 # ==================== 0-DAN 5-GATON RO'YXATDAN O'TISH ====================
 
+async def start_targeted_profile_update_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = context.user_data.get('lang', 'uz')
+    user = update.effective_user
+    queue = context.user_data.get('profile_update_queue', [])
+    
+    field_labels = {
+        'name': "👤 Ism va familiya",
+        'phone': "📱 Telefon raqam",
+        'location': "📍 Joylashuv / Manzil",
+        'positions': "🛠 Soha va mutaxassislik",
+        'gender_age': "⚧ Yoshi va jinsi",
+        'gender': "⚧ Jinsi",
+        'age': "🎂 Yoshi",
+        'work_schedule': "⏱ Ish rejimi",
+    }
+    
+    human_fields = ", ".join([field_labels.get(f, f) for f in queue])
+    intro_msg = (
+        f"ℹ️ <b>Profil ma'lumotlarini yangilash</b>\n\n"
+        f"Hurmatli <b>{user.first_name}</b>, iltimos quyidagi ma'lumotni yangilang:\n"
+        f"👉 <b>{human_fields}</b>"
+    )
+    if update.message:
+        await update.message.reply_text(intro_msg, parse_mode='HTML')
+    elif update.callback_query:
+        await update.callback_query.message.reply_text(intro_msg, parse_mode='HTML')
+        
+    return await next_profile_update_step(update, context)
+
+async def next_profile_update_step(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = context.user_data.get('lang', 'uz')
+    queue = context.user_data.get('profile_update_queue', [])
+    
+    if not queue:
+        # Barcha talab qilingan maydonlar to'ldirildi! DBga saqlaymiz va tugatamiz
+        user_id = update.effective_user.id
+        username = update.effective_user.username or ''
+        await save_full_profile_to_db(user_id, username, context.user_data)
+        context.user_data.pop('is_targeted_profile_update', None)
+        context.user_data.pop('profile_update_queue', None)
+        
+        success_text = "✅ <b>Profilingiz muvaffaqiyatli yangilandi va faollashtirildi!</b>"
+        if update.message:
+            await update.message.reply_text(success_text, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+        elif update.callback_query:
+            await update.callback_query.message.reply_text(success_text, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+            
+        return await show_main_menu(update, context)
+        
+    next_field = queue[0]
+    msg_target = update.message if update.message else update.callback_query.message
+    
+    if next_field == 'name':
+        await msg_target.reply_text(t('step1_name_title', lang), reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+        return STATE_FULL_NAME
+        
+    elif next_field in ('gender_age', 'gender'):
+        keyboard = [
+            [
+                InlineKeyboardButton(t('gender_male', lang), callback_data="gender_male"),
+                InlineKeyboardButton(t('gender_female', lang), callback_data="gender_female"),
+            ]
+        ]
+        await msg_target.reply_text(t('step1_gender_title', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        return STATE_GENDER
+        
+    elif next_field == 'age':
+        await msg_target.reply_text(t('step1_age_title', lang), reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+        return STATE_AGE
+        
+    elif next_field == 'phone':
+        keyboard = [[KeyboardButton(t('btn_send_phone', lang), request_contact=True)]]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await msg_target.reply_text(t('step1_phone_title', lang), reply_markup=reply_markup, parse_mode='HTML')
+        return STATE_PHONE
+        
+    elif next_field == 'location':
+        keyboard = [
+            [KeyboardButton(t('btn_send_gps', lang), request_location=True)],
+            [KeyboardButton(t('btn_manual_region', lang))]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await msg_target.reply_text(t('step2_geo_title', lang), reply_markup=reply_markup, parse_mode='HTML')
+        return STATE_GEO_LOCATION
+        
+    elif next_field == 'positions':
+        return await show_categories_page(msg_target, context, page=1)
+        
+    elif next_field == 'work_schedule':
+        keyboard = [
+            [InlineKeyboardButton(t('schedule_day', lang), callback_data="sched_day_shift")],
+            [InlineKeyboardButton(t('schedule_24_7', lang), callback_data="sched_24_7")],
+            [InlineKeyboardButton(t('schedule_flexible', lang), callback_data="sched_flexible")],
+        ]
+        await msg_target.reply_text(t('step4_schedule_title', lang), reply_markup=InlineKeyboardMarkup(keyboard), parse_mode='HTML')
+        return STATE_WORK_SCHEDULE
+        
+    else:
+        queue.pop(0)
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     db_user = await get_user_db_record(user.id)
     
-    # Agar foydalanuvchi allaqachon ro'yxatdan o'tgan bo'lsa -> To'g'ridan to'g'ri kutib olib Asosiy Menyuni ochish
+    # 1. Agar foydalanuvchi ma'lumotlarini qisman yangilash talab qilingan bo'lsa
+    if db_user and db_user.get('needs_profile_update') and db_user.get('has_existing_profile'):
+        lang = db_user['language'] or 'uz'
+        context.user_data['lang'] = lang
+        profile = await get_user_profile(user.id)
+        if profile:
+            context.user_data['full_name'] = profile.get('name', '')
+            context.user_data['phone'] = profile.get('phone', '')
+            context.user_data['gender'] = 'male' if profile.get('gender') != 'female' else 'female'
+            context.user_data['age'] = profile.get('age', 25)
+            context.user_data['region_id'] = profile.get('region_id')
+            context.user_data['latitude'] = profile.get('latitude')
+            context.user_data['longitude'] = profile.get('longitude')
+            context.user_data['district'] = profile.get('district', '')
+            context.user_data['street_address'] = profile.get('street_address', '')
+            context.user_data['category_id'] = profile.get('category_id')
+            context.user_data['work_schedule'] = '24_7'
+            context.user_data['selected_pos_ids'] = set()
+            
+        raw_fields = db_user.get('profile_update_fields', '')
+        fields = [f.strip() for f in raw_fields.split(',') if f.strip() and f.strip() != 'all']
+        if not fields:
+            fields = ['name', 'phone', 'location', 'positions']
+        context.user_data['profile_update_queue'] = fields
+        context.user_data['is_targeted_profile_update'] = True
+        
+        return await start_targeted_profile_update_flow(update, context)
+
+    # 2. Agar foydalanuvchi allaqachon to'liq ro'yxatdan o'tgan bo'lsa -> To'g'ridan to'g'ri kutib olib Asosiy Menyuni ochish
     if db_user and db_user['is_registered']:
         lang = db_user['language']
         context.user_data['lang'] = lang
@@ -850,7 +982,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.callback_query.message.reply_text(welcome_msg, parse_mode='HTML')
         return await show_main_menu(update, context)
         
-    # Yangi foydalanuvchi -> 0-qadam Til tanlash
+    # 3. Yangi foydalanuvchi -> 0-qadam Til tanlash
     context.user_data.clear()
     context.user_data['selected_pos_ids'] = set()
     
@@ -957,6 +1089,16 @@ async def gender_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     gender = 'male' if data == 'gender_male' else 'female'
     context.user_data['gender'] = gender
     
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'gender_age' in queue:
+            await query.message.reply_text(t('step1_age_title', lang), parse_mode='HTML')
+            return STATE_AGE
+        elif 'gender' in queue:
+            queue.remove('gender')
+            context.user_data['profile_update_queue'] = queue
+            return await next_profile_update_step(update, context)
+            
     await query.message.edit_text(t('step1_name_title', lang), parse_mode='HTML')
     return STATE_FULL_NAME
 
@@ -969,6 +1111,14 @@ async def full_name_input_handler(update: Update, context: ContextTypes.DEFAULT_
         return STATE_FULL_NAME
         
     context.user_data['full_name'] = name
+    
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'name' in queue:
+            queue.remove('name')
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+        
     await update.message.reply_text(t('step1_age_title', lang), parse_mode='HTML')
     return STATE_AGE
 
@@ -982,6 +1132,15 @@ async def age_input_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     context.user_data['age'] = int(text)
     
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'gender_age' in queue:
+            queue.remove('gender_age')
+        if 'age' in queue:
+            queue.remove('age')
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+        
     # 1.4: Telefon raqam
     keyboard = [[KeyboardButton(t('btn_send_phone', lang), request_contact=True)]]
     reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
@@ -1003,6 +1162,13 @@ async def phone_input_handler(update: Update, context: ContextTypes.DEFAULT_TYPE
         
     context.user_data['phone'] = clean_phone
     
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'phone' in queue:
+            queue.remove('phone')
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+        
     # 2.1: GPS Lokatsiya
     keyboard = [
         [KeyboardButton(t('btn_send_gps', lang), request_location=True)],
@@ -1067,6 +1233,14 @@ async def manual_region_callback(update: Update, context: ContextTypes.DEFAULT_T
 async def street_address_input_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     address = update.message.text.strip()
     context.user_data['street_address'] = address
+    
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'location' in queue:
+            queue.remove('location')
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+        
     return await show_categories_page(update, context, page=1)
 
 async def show_categories_page(update_or_query, context: ContextTypes.DEFAULT_TYPE, page: int = 1):
@@ -1130,6 +1304,12 @@ async def category_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return STATE_CATEGORY
         
     if data == "pos_done":
+        if context.user_data.get('is_targeted_profile_update'):
+            queue = context.user_data.get('profile_update_queue', [])
+            if 'positions' in queue:
+                queue.remove('positions')
+            context.user_data['profile_update_queue'] = queue
+            return await next_profile_update_step(update, context)
         return await show_employment_type_step(query.message, context)
         
     if data.startswith("cat_"):
@@ -1267,6 +1447,13 @@ async def work_schedule_callback(update: Update, context: ContextTypes.DEFAULT_T
     sched = query.data.replace("sched_", "")
     context.user_data['work_schedule'] = sched
     
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'work_schedule' in queue:
+            queue.remove('work_schedule')
+        context.user_data['profile_update_queue'] = queue
+        return await next_profile_update_step(update, context)
+        
     return await show_review_card(query.message, context)
 
 async def show_review_card(msg_target, context: ContextTypes.DEFAULT_TYPE):

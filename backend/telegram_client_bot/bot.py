@@ -109,6 +109,7 @@ def get_client_user(telegram_id: int):
         user.first_name and 
         not user.needs_profile_update
     )
+    has_existing_profile = bool(user.is_registered and user.phone_number and user.first_name)
     return {
         'id': user.id,
         'telegram_id': user.telegram_id,
@@ -116,9 +117,11 @@ def get_client_user(telegram_id: int):
         'phone_number': user.phone_number,
         'language': user.language or 'uz',
         'is_registered': is_fully_complete,
+        'has_existing_profile': has_existing_profile,
         'role': user.role,
         'needs_profile_update': user.needs_profile_update,
-        'profile_update_reason': user.profile_update_reason,
+        'profile_update_reason': user.profile_update_reason or '',
+        'profile_update_fields': user.profile_update_fields or '',
     }
 
 @sync_to_async
@@ -141,6 +144,7 @@ def save_or_update_client_profile(telegram_id: int, username: str, data: dict):
     user.is_registered = True
     user.needs_profile_update = False
     user.profile_update_reason = ''
+    user.profile_update_fields = ''
     user.save()
     return user
 
@@ -313,6 +317,69 @@ def delete_job_application_in_db(app_id: int, employer_tg_id: int):
 
 # ==================== HANDLERS: START & AUTH ====================
 
+async def start_targeted_client_profile_update_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = context.user_data.get('lang', 'uz')
+    user = update.effective_user
+    queue = context.user_data.get('profile_update_queue', [])
+    
+    field_labels = {
+        'name': "👤 Ism va familiya",
+        'phone': "📱 Telefon raqam",
+    }
+    
+    human_fields = ", ".join([field_labels.get(f, f) for f in queue])
+    intro_msg = (
+        f"ℹ️ <b>Profil ma'lumotlarini yangilash</b>\n\n"
+        f"Hurmatli <b>{user.first_name}</b>, iltimos profilingizdagi quyidagi ma'lumotni yangilang:\n"
+        f"👉 <b>{human_fields}</b>"
+    )
+    if update.callback_query:
+        await update.callback_query.message.reply_text(intro_msg, parse_mode='HTML')
+    else:
+        await update.message.reply_text(intro_msg, parse_mode='HTML')
+        
+    return await next_client_profile_update_step(update, context)
+
+async def next_client_profile_update_step(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    lang = context.user_data.get('lang', 'uz')
+    queue = context.user_data.get('profile_update_queue', [])
+    
+    if not queue:
+        # Barcha so'ralgan maydonlar to'ldirildi!
+        tg_id = update.effective_user.id
+        username = update.effective_user.username
+        await save_or_update_client_profile(tg_id, username, context.user_data)
+        context.user_data.pop('is_targeted_profile_update', None)
+        context.user_data.pop('profile_update_queue', None)
+        
+        success_text = "✅ <b>Profilingiz muvaffaqiyatli yangilandi!</b>"
+        if update.callback_query:
+            await update.callback_query.message.reply_text(success_text, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+        else:
+            await update.message.reply_text(success_text, reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+            
+        return await show_main_menu(update, context)
+        
+    next_field = queue[0]
+    msg_target = update.message if update.message else update.callback_query.message
+    
+    if next_field == 'name':
+        await msg_target.reply_text(t('step0_name_title', lang), reply_markup=ReplyKeyboardRemove(), parse_mode='HTML')
+        return STATE_AUTH_NAME
+        
+    elif next_field == 'phone':
+        keyboard = [
+            [KeyboardButton(t('btn_send_phone', lang), request_contact=True)]
+        ]
+        reply_markup = ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)
+        await msg_target.reply_text(t('step0_phone_title', lang), reply_markup=reply_markup, parse_mode='HTML')
+        return STATE_AUTH_PHONE
+        
+    else:
+        queue.pop(0)
+        context.user_data['profile_update_queue'] = queue
+        return await next_client_profile_update_step(update, context)
+
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     tg_id = update.effective_user.id
     user_data = context.user_data
@@ -329,6 +396,24 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 deep_lang = parts[-1]
 
     client = await get_client_user(tg_id)
+    
+    # 2. Agar foydalanuvchiga ma'lumotlarini qisman yangilash so'rovi berilgan bo'lsa
+    if client and client.get('needs_profile_update') and client.get('has_existing_profile'):
+        lang = client['language'] or 'uz'
+        user_data['lang'] = lang
+        user_data['name'] = client['first_name'] or ''
+        user_data['phone'] = client['phone_number'] or ''
+        
+        raw_fields = client.get('profile_update_fields', '')
+        fields = [f.strip() for f in raw_fields.split(',') if f.strip() and f.strip() != 'all']
+        if not fields:
+            fields = ['name', 'phone']
+        user_data['profile_update_queue'] = fields
+        user_data['is_targeted_profile_update'] = True
+        
+        return await start_targeted_client_profile_update_flow(update, context)
+
+    # 3. Agar ro'yxatdan to'liq o'tgan bo'lsa
     if client and client['is_registered']:
         lang = client['language'] or 'uz'
         if deep_lang:
@@ -393,6 +478,13 @@ async def auth_name_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
     context.user_data['name'] = name
     
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'name' in queue:
+            queue.remove('name')
+        context.user_data['profile_update_queue'] = queue
+        return await next_client_profile_update_step(update, context)
+        
     keyboard = [
         [KeyboardButton(t('btn_send_phone', lang), request_contact=True)]
     ]
@@ -429,6 +521,14 @@ async def auth_phone_handler(update: Update, context: ContextTypes.DEFAULT_TYPE)
         phone = '+' + phone
 
     context.user_data['phone'] = phone
+    
+    if context.user_data.get('is_targeted_profile_update'):
+        queue = context.user_data.get('profile_update_queue', [])
+        if 'phone' in queue:
+            queue.remove('phone')
+        context.user_data['profile_update_queue'] = queue
+        return await next_client_profile_update_step(update, context)
+        
     tg_id = update.effective_user.id
     username = update.effective_user.username
     
