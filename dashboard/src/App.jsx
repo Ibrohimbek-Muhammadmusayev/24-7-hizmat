@@ -15,6 +15,7 @@ import AddWorkerModal from './components/AddWorkerModal';
 import CreateOrderModal from './components/CreateOrderModal';
 import LoginModal from './components/LoginModal';
 import SettingsManager from './components/SettingsManager';
+import LeadsManager from './components/LeadsManager';
 import { Sun, Moon, RotateCw, LogOut, ShieldCheck, Headphones, User, Menu, Crown } from 'lucide-react';
 
 import { fetchOrders, fetchWorkers, fetchLiveLocations, fetchOrderStats, fetchCategories, fetchJobPosts, fetchUsers } from './services/api';
@@ -198,6 +199,7 @@ export default function App() {
     analytics: 'Boshqaruv Analitikasi & Moliyaviy KPI',
     job_posts: 'Ish E\'lonlari & Vakansiyalar Boshqaruvi',
     audience: 'Telegram Bot Foydalanuvchilar Bazasi',
+    leads: 'Lidlar & Potensial Mijozlar Boshqaruvi',
     broadcast: 'Ommaviy Xabarnomalar (Broadcast)',
     bot_control: 'Telegram Bot Monitoring & Servis Boshqaruvi',
     categories: 'Xizmat Yo\'nalishlari & Kategoriyalar',
@@ -294,6 +296,10 @@ export default function App() {
 
         {activeTab === 'audience' && isTabAllowed('audience') && (
           <BotAudienceManager currentUser={currentUser} />
+        )}
+
+        {activeTab === 'leads' && isTabAllowed('leads') && (
+          <LeadsManager currentUser={currentUser} />
         )}
 
         {activeTab === 'broadcast' && isTabAllowed('broadcast') && (

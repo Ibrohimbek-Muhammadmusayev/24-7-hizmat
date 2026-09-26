@@ -29,6 +29,7 @@ const AVAILABLE_TABS = [
   { id: 'analytics', label: 'Boshqaruv Analitikasi', icon: '📊' },
   { id: 'job_posts', label: 'Ish E\'lonlari & Vakansiyalar', icon: '💼' },
   { id: 'audience', label: 'Foydalanuvchilar Bazasi', icon: '👥' },
+  { id: 'leads', label: 'Lidlar & Potensial Mijozlar', icon: '🎯' },
   { id: 'broadcast', label: 'Ommaviy Xabarnoma', icon: '📢' },
   { id: 'bot_control', label: 'Telegram Bot Boshqaruvi', icon: '🤖' },
   { id: 'categories', label: 'Kasblar & Kategoriyalar', icon: '🗂️' },

@@ -110,3 +110,47 @@ class ToggleOnlineSerializer(serializers.Serializer):
 class UpdateFCMTokenSerializer(serializers.Serializer):
     fcm_token = serializers.CharField()
 
+class LeadUserSerializer(serializers.ModelSerializer):
+    missing_fields = serializers.SerializerMethodField()
+    bot_type_display = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'first_name', 'last_name', 'full_name',
+            'phone_number', 'telegram_id', 'role', 'language',
+            'started_client_bot', 'started_worker_bot', 'bot_type_display',
+            'is_registered', 'date_joined', 'missing_fields', 'district', 'specialty'
+        ]
+
+    def get_full_name(self, obj):
+        name = f"{obj.first_name or ''} {obj.last_name or ''}".strip()
+        return name if name else (f"@{obj.username}" if obj.username else f"ID: {obj.telegram_id}")
+
+    def get_bot_type_display(self, obj):
+        if obj.started_client_bot and obj.started_worker_bot:
+            return "Ikkala Bot"
+        elif obj.started_client_bot:
+            return "Mijoz Boti"
+        elif obj.started_worker_bot:
+            return "Usta Boti"
+        return "Telegram Bot"
+
+    def get_missing_fields(self, obj):
+        missing = []
+        if not obj.phone_number:
+            missing.append("Telefon raqam")
+        if not obj.first_name:
+            missing.append("Ism")
+        if obj.role == User.Role.WORKER:
+            if not obj.category_id and not obj.specialty and not obj.selected_positions.exists():
+                missing.append("Soha / Mutaxassislik")
+            if not obj.district and not obj.region_id:
+                missing.append("Manzil / Tuman")
+        elif obj.role == User.Role.CLIENT:
+            if not obj.district and not obj.region_id:
+                missing.append("Manzil / Tuman")
+        return missing
+
+

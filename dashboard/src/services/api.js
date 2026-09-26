@@ -109,6 +109,11 @@ export const updateBotSettings = (settingsData) => api.post('/bot/settings/', se
 export const sendBotMessage = (chatId, text, botType = 'CLIENT') => api.post('/bot/send-message/', { chat_id: chatId, text, bot_type: botType });
 export const sendBroadcast = (target, text) => api.post('/bot/broadcast/', { target, text });
 
+// Leads & Unregistered Bot Users
+export const fetchLeads = (params = {}) => api.get('/accounts/leads/', { params });
+export const sendLeadReminder = (data) => api.post('/accounts/leads/send-reminder/', data);
+export const deleteLead = (id) => api.delete(`/accounts/leads/${id}/`);
+
 export default api;
 
 

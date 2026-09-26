@@ -12,7 +12,8 @@ from .serializers import (
     RegisterWorkerSerializer,
     UserFeedbackSerializer,
     WorkerPortfolioSerializer,
-    WorkerReviewSerializer
+    WorkerReviewSerializer,
+    LeadUserSerializer
 )
 from locations.models import WorkerLocation
 
@@ -386,6 +387,230 @@ class RequestProfileUpdateView(views.APIView):
             'message': f"{user.get_full_name() or user.first_name} uchun ma'lumotlarni qayta to'ldirish holati faollashtirildi!",
             'user': UserSerializer(user).data
         })
+
+
+class LeadsListView(views.APIView):
+    """
+    Returns users who pressed /start in Telegram Bot but have not completed full registration (is_registered=False).
+    Provides statistics and filtering by bot_type (CLIENT, WORKER, BOTH), language, search query.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        base_qs = User.objects.filter(
+            telegram_id__isnull=False,
+            is_registered=False,
+            is_staff=False,
+            is_superuser=False
+        ).order_by('-date_joined', '-id')
+
+        # Overall Stats before filters
+        total_leads = base_qs.count()
+        client_leads_count = base_qs.filter(models.Q(started_client_bot=True) | models.Q(role=User.Role.CLIENT)).count()
+        worker_leads_count = base_qs.filter(models.Q(started_worker_bot=True) | models.Q(role=User.Role.WORKER)).count()
+        with_phone_count = base_qs.filter(phone_number__isnull=False).exclude(phone_number='').count()
+
+        # Apply Filters
+        queryset = base_qs
+        bot_filter = request.query_params.get('bot_filter', 'ALL')
+        if bot_filter == 'CLIENT':
+            queryset = queryset.filter(models.Q(started_client_bot=True) | models.Q(role=User.Role.CLIENT))
+        elif bot_filter == 'WORKER':
+            queryset = queryset.filter(models.Q(started_worker_bot=True) | models.Q(role=User.Role.WORKER))
+        elif bot_filter == 'BOTH':
+            queryset = queryset.filter(started_client_bot=True, started_worker_bot=True)
+
+        lang = request.query_params.get('language')
+        if lang:
+            queryset = queryset.filter(language=lang)
+
+        search = request.query_params.get('search', '').strip()
+        if search:
+            queryset = queryset.filter(
+                models.Q(first_name__icontains=search) |
+                models.Q(last_name__icontains=search) |
+                models.Q(username__icontains=search) |
+                models.Q(phone_number__icontains=search) |
+                models.Q(telegram_id__icontains=search)
+            )
+
+        serializer = LeadUserSerializer(queryset, many=True)
+        return Response({
+            'stats': {
+                'total_leads': total_leads,
+                'client_leads': client_leads_count,
+                'worker_leads': worker_leads_count,
+                'with_phone': with_phone_count,
+                'without_phone': total_leads - with_phone_count,
+                'filtered_count': queryset.count()
+            },
+            'results': serializer.data
+        })
+
+
+class SendLeadReminderView(views.APIView):
+    """
+    Sends re-engagement / registration reminder message to one or multiple leads via Telegram Bot.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        user_ids = request.data.get('user_ids', [])
+        template_type = request.data.get('template_type', 'welcome')
+        custom_text = request.data.get('custom_text', '').strip()
+
+        target_ids = []
+        if user_id:
+            target_ids.append(user_id)
+        if isinstance(user_ids, list):
+            target_ids.extend(user_ids)
+        target_ids = list(set(target_ids))
+
+        if not target_ids:
+            return Response({'error': "Kamida bitta foydalanuvchi tanlanishi kerak!"}, status=status.HTTP_400_BAD_REQUEST)
+
+        users = User.objects.filter(id__in=target_ids, telegram_id__isnull=False)
+        if not users.exists():
+            return Response({'error': "Xabar yuborish uchun faol Telegram ID ga ega foydalanuvchilar topilmadi!"}, status=status.HTTP_404_NOT_FOUND)
+
+        from bot_control.models import BotConfig
+        from telegram import Bot
+        from django.conf import settings
+        from asgiref.sync import async_to_sync
+
+        config = BotConfig.get_config()
+        primary_token = (config.token or getattr(settings, 'TELEGRAM_BOT_TOKEN', '')).strip()
+        client_token = (config.client_bot_token or primary_token).strip()
+
+        client_bot = Bot(token=client_token) if client_token else None
+        worker_bot = Bot(token=primary_token) if primary_token else client_bot
+
+        sent_count = 0
+        failed_count = 0
+
+        TEMPLATES = {
+            'welcome': {
+                'uz': (
+                    "Assalomu alaykum, <b>{name}</b>! 🌟\n\n"
+                    "Siz <b>24/7 Xizmat</b> tizimimizga tashrif buyurgan edingiz.\n\n"
+                    "Platformamiz orqali kun-u tun istalgan sohada usta va mutaxassislarni topishingiz yoki o'zingiz usta sifatida xizmat ko'rsatib, daromad qilishingiz mumkin!\n\n"
+                    "Imkoniyatlardan to'liq foydalanish uchun ro'yxatdan o'tishni yakunlang:\n"
+                    "👉 <b>/start</b> tugmasini bosing!"
+                ),
+                'oz': (
+                    "Ассалому алайкум, <b>{name}</b>! 🌟\n\n"
+                    "Сиз <b>24/7 Хизмат</b> тизимимизга ташриф буюрган эдингиз.\n\n"
+                    "Платформамиз орқали кун-у тун исталган соҳада уста ва мутахассисларни топишингиз ёки ўзингиз уста сифатида хизмат кўрсатиб, даромад қилишингиз мумкин!\n\n"
+                    "Имкониятлардан тўлиқ фойдаланиш учун рўйхатдан ўтишни якунланг:\n"
+                    "👉 <b>/start</b> тугмасини босинг!"
+                ),
+                'ru': (
+                    "Здравствуйте, <b>{name}</b>! 🌟\n\n"
+                    "Вы заходили в наш сервис <b>24/7 Xizmat</b>.\n\n"
+                    "Через нашу платформу вы можете круглосуточно находить надежных мастеров или сами предлагать свои услуги и зарабатывать!\n\n"
+                    "Чтобы завершить регистрацию и получить полный доступ:\n"
+                    "👉 Нажмите <b>/start</b>!"
+                ),
+                'en': (
+                    "Hello, <b>{name}</b>! 🌟\n\n"
+                    "You recently visited our <b>24/7 Service</b> platform.\n\n"
+                    "Through our platform, you can find professionals for any task 24/7 or offer your own services to earn income!\n\n"
+                    "To complete your registration:\n"
+                    "👉 Press <b>/start</b>!"
+                ),
+            },
+            'quick_reg': {
+                'uz': (
+                    "Hurmatli <b>{name}</b>! ⚡\n\n"
+                    "Siz botimizda ro'yxatdan o'tishni to'liq yakunlamagansiz. Ro'yxatdan o'tish atigi 1 daqiqa vaqt oladi va mutlaqo bepul!\n\n"
+                    "Davom etish uchun quyidagi buyruqni bosing:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'oz': (
+                    "Ҳурматли <b>{name}</b>! ⚡\n\n"
+                    "Сиз ботимизда рўйхатдан ўтишни тўлиқ якунламагансиз. Рўйхатдан ўтиш атиги 1 дақиқа вақт олади ва мутлақо бепул!\n\n"
+                    "Давом этиш учун қуйидаги буйруқни босинг:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'ru': (
+                    "Уважаемый(ая) <b>{name}</b>! ⚡\n\n"
+                    "Вы еще не завершили регистрацию в боте. Это займет всего 1 минуту и совершенно бесплатно!\n\n"
+                    "Чтобы продолжить, нажмите:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'en': (
+                    "Dear <b>{name}</b>! ⚡\n\nYou haven't completed your registration in our bot yet. It only takes 1 minute and is completely free!\n\nTo continue, press:\n👉 <b>/start</b>"
+                ),
+            },
+            'worker_call': {
+                'uz': (
+                    "Hurmatli usta / mutaxassis! 🛠\n\n"
+                    "<b>24/7 Xizmat</b> tizimida har kuni yuzlab mijozlar turli yo'nalishlarda usta qidirmoqda. Doimiy mijozlar va yangi buyurtmalarga ega bo'lish uchun profilingizni to'ldiring:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'oz': (
+                    "Ҳурматли уста / мутахассис! 🛠\n\n"
+                    "<b>24/7 Хизмат</b> тизимида ҳар куни юзлаб мижозлар турли йўналишларда уста қидирмоқда. Доимий мижозлар ва янги буюртмаларга эга бўлиш учун профилингизни тўлдиринг:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'ru': (
+                    "Уважаемый мастер / специалист! 🛠\n\n"
+                    "В сервисе <b>24/7 Xizmat</b> ежедневно клиенты ищут мастеров. Заполните свой профиль, чтобы получать прямые заказы:\n"
+                    "👉 <b>/start</b>"
+                ),
+                'en': (
+                    "Dear specialist / worker! 🛠\n\nClients are looking for professionals daily on <b>24/7 Service</b>. Complete your profile to start receiving direct orders:\n"
+                    "👉 <b>/start</b>"
+                )
+            }
+        }
+
+        for u in users:
+            try:
+                lang = u.language or 'uz'
+                user_name = u.first_name or u.username or ("Foydalanuvchi" if lang in ['uz', 'oz'] else "User")
+
+                if template_type == 'custom' and custom_text:
+                    msg_text = custom_text.replace('{name}', user_name)
+                else:
+                    tmpl_dict = TEMPLATES.get(template_type, TEMPLATES['welcome'])
+                    msg_text = tmpl_dict.get(lang, tmpl_dict['uz']).format(name=user_name)
+
+                # Pick bot instance
+                bot_to_use = client_bot if (u.started_client_bot or u.role == User.Role.CLIENT) else worker_bot
+                if not bot_to_use:
+                    bot_to_use = worker_bot or client_bot
+
+                if not bot_to_use:
+                    failed_count += 1
+                    continue
+
+                async_to_sync(bot_to_use.send_message)(
+                    chat_id=u.telegram_id,
+                    text=msg_text,
+                    parse_mode='HTML'
+                )
+                sent_count += 1
+            except Exception as ex:
+                failed_count += 1
+                print(f"Error sending lead reminder to {u.telegram_id}:", ex)
+
+        return Response({
+            'success': True,
+            'sent_count': sent_count,
+            'failed_count': failed_count,
+            'message': f"{sent_count} ta foydalanuvchiga muvaffaqiyatli xabarnoma yuborildi!" + (f" ({failed_count} tasiga yetib bormadi)" if failed_count > 0 else "")
+        })
+
+
+class DeleteLeadView(generics.DestroyAPIView):
+    """
+    Deletes an uncompleted lead record.
+    """
+    permission_classes = [permissions.AllowAny]
+    queryset = User.objects.filter(is_registered=False, is_staff=False, is_superuser=False)
+
 
 
 

@@ -14,7 +14,10 @@ from .views import (
     UpdateUserCreditsView,
     RequestProfileUpdateView,
     UserFeedbackListView,
-    UserFeedbackDetailView
+    UserFeedbackDetailView,
+    LeadsListView,
+    SendLeadReminderView,
+    DeleteLeadView
 )
 
 urlpatterns = [
@@ -33,5 +36,9 @@ urlpatterns = [
     path('users/<int:user_id>/request-profile-update/', RequestProfileUpdateView.as_view(), name='request-profile-update'),
     path('feedbacks/', UserFeedbackListView.as_view(), name='feedback-list'),
     path('feedbacks/<int:pk>/', UserFeedbackDetailView.as_view(), name='feedback-detail'),
+    path('leads/', LeadsListView.as_view(), name='leads-list'),
+    path('leads/send-reminder/', SendLeadReminderView.as_view(), name='leads-send-reminder'),
+    path('leads/<int:pk>/', DeleteLeadView.as_view(), name='lead-delete'),
 ]
+
 

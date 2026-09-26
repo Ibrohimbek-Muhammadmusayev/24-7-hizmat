@@ -18,7 +18,8 @@ import {
   ChevronRight,
   Settings,
   X,
-  Crown
+  Crown,
+  Target
 } from 'lucide-react';
 
 export default function Sidebar({ activeTab, setActiveTab, currentUser, mobileOpen = false, onClose }) {
@@ -33,7 +34,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, mobileOp
     const list = allowed.split(',').map(s => s.trim()).filter(Boolean);
     if (list.length === 0) {
       if (userRole === 'CALL_CENTER') return ['callcenter', 'orders', 'livemap'].includes(tabId);
-      return ['analytics', 'job_posts', 'livemap', 'workers', 'audience'].includes(tabId);
+      return ['analytics', 'job_posts', 'livemap', 'workers', 'audience', 'leads'].includes(tabId);
     }
     return list.includes(tabId);
   };
@@ -52,6 +53,7 @@ export default function Sidebar({ activeTab, setActiveTab, currentUser, mobileOp
     { id: 'livemap', label: 'Jonli Xarita & GPS', icon: Map },
     { id: 'job_posts', label: 'Ish E\'lonlari (Job Posts)', icon: Briefcase },
     { id: 'audience', label: 'Foydalanuvchilar Bazasi', icon: Users },
+    { id: 'leads', label: 'Lidlar & Potensial Mijozlar', icon: Target },
     { id: 'categories', label: 'Xizmat Yo\'nalishlari', icon: FolderTree },
     { id: 'workers', label: 'Usta va Mutaxassislar', icon: HardHat },
     { id: 'broadcast', label: 'Ommaviy Xabarnoma', icon: Megaphone },
