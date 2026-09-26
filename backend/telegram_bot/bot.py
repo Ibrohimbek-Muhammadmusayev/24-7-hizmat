@@ -123,6 +123,45 @@ def get_user_db_record(telegram_id: int):
     }
 
 @sync_to_async
+def record_lead_worker(telegram_id: int, username: str = '', first_name: str = '', last_name: str = '', lang: str = 'uz'):
+    """
+    Botga /start bosgan yoki kirgan foydalanuvchini lid sifatida DBda saqlash yoki yangilash.
+    Agar ro'yxatdan to'liq o'tgan bo'lsa, uning ro'yxatdan o'tgan holatini buzmaydi.
+    """
+    user, created = User.objects.get_or_create(
+        telegram_id=telegram_id,
+        defaults={
+            'username': username or f"tg_{telegram_id}",
+            'first_name': first_name or '',
+            'last_name': last_name or '',
+            'role': User.Role.WORKER,
+            'language': lang or 'uz',
+            'is_registered': False,
+            'started_worker_bot': True,
+        }
+    )
+    # Agar mavjud bo'lsa, username/first_name/started_worker_bot ni yangilab qo'yamiz
+    update_fields = []
+    if not user.started_worker_bot:
+        user.started_worker_bot = True
+        update_fields.append('started_worker_bot')
+    if username and user.username != username:
+        user.username = username
+        update_fields.append('username')
+    if first_name and not user.first_name:
+        user.first_name = first_name
+        update_fields.append('first_name')
+    if last_name and not user.last_name:
+        user.last_name = last_name
+        update_fields.append('last_name')
+    if lang and not user.language:
+        user.language = lang
+        update_fields.append('language')
+    if update_fields:
+        user.save(update_fields=update_fields)
+    return user
+
+@sync_to_async
 def get_all_registered_users_for_notification():
     return list(User.objects.filter(is_registered=True, telegram_id__isnull=False).values('telegram_id', 'language', 'first_name'))
 
@@ -982,7 +1021,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.callback_query.message.reply_text(welcome_msg, parse_mode='HTML')
         return await show_main_menu(update, context)
         
-    # 3. Yangi foydalanuvchi -> 0-qadam Til tanlash
+    # 3. Yangi foydalanuvchi -> DBda darhol Lid sifatida saqlash va 0-qadam Til tanlash
+    await record_lead_worker(
+        telegram_id=user.id,
+        username=user.username or '',
+        first_name=user.first_name or '',
+        last_name=user.last_name or '',
+        lang='uz'
+    )
+
     context.user_data.clear()
     context.user_data['selected_pos_ids'] = set()
     
@@ -1022,6 +1069,16 @@ async def language_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     lang = query.data.replace("lang_", "")
     context.user_data['lang'] = lang
+    
+    # Lidning tanlagan tilini DBda ham yangilash
+    user = update.effective_user
+    await record_lead_worker(
+        telegram_id=user.id,
+        username=user.username or '',
+        first_name=user.first_name or '',
+        last_name=user.last_name or '',
+        lang=lang
+    )
     
     # 0.1-QADAM: ROLNI TANLASH
     keyboard = [

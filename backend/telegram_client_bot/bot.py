@@ -125,6 +125,43 @@ def get_client_user(telegram_id: int):
     }
 
 @sync_to_async
+def record_lead_client(telegram_id: int, username: str = '', first_name: str = '', last_name: str = '', lang: str = 'uz'):
+    """
+    Ish beruvchi / Mijoz botiga /start bosgan yoki kirgan foydalanuvchini lid sifatida DBda saqlash yoki yangilash.
+    """
+    user, created = User.objects.get_or_create(
+        telegram_id=telegram_id,
+        defaults={
+            'username': username or f"tg_client_{telegram_id}",
+            'first_name': first_name or '',
+            'last_name': last_name or '',
+            'role': User.Role.CLIENT,
+            'language': lang or 'uz',
+            'is_registered': False,
+            'started_client_bot': True,
+        }
+    )
+    update_fields = []
+    if not user.started_client_bot:
+        user.started_client_bot = True
+        update_fields.append('started_client_bot')
+    if username and user.username != username:
+        user.username = username
+        update_fields.append('username')
+    if first_name and not user.first_name:
+        user.first_name = first_name
+        update_fields.append('first_name')
+    if last_name and not user.last_name:
+        user.last_name = last_name
+        update_fields.append('last_name')
+    if lang and not user.language:
+        user.language = lang
+        update_fields.append('language')
+    if update_fields:
+        user.save(update_fields=update_fields)
+    return user
+
+@sync_to_async
 def save_or_update_client_profile(telegram_id: int, username: str, data: dict):
     user, _ = User.objects.get_or_create(
         telegram_id=telegram_id,
@@ -426,6 +463,14 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if deep_lang:
         user_data['lang'] = deep_lang
+        # Lid sifatida yozib qo'yish
+        await record_lead_client(
+            telegram_id=tg_id,
+            username=update.effective_user.username or '',
+            first_name=update.effective_user.first_name or '',
+            last_name=update.effective_user.last_name or '',
+            lang=deep_lang
+        )
         text = t('welcome_employer', deep_lang, name=update.effective_user.first_name or 'Foydalanuvchi')
         text += "\n\n" + t('step0_name_title', deep_lang)
         if update.callback_query:
@@ -434,6 +479,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_text(text=text, parse_mode='HTML')
         return STATE_AUTH_NAME
+
+    # Boshlang'ich yangi foydalanuvchini DBda lid sifatida saqlash
+    await record_lead_client(
+        telegram_id=tg_id,
+        username=update.effective_user.username or '',
+        first_name=update.effective_user.first_name or '',
+        last_name=update.effective_user.last_name or '',
+        lang='uz'
+    )
 
     # Til tanlash tugmalari
     keyboard = [
@@ -463,6 +517,16 @@ async def auth_lang_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     lang = data.replace('lang_', '')
     context.user_data['lang'] = lang
+    
+    # Tanlangan tilni lid yozuviga saqlash
+    user = update.effective_user
+    await record_lead_client(
+        telegram_id=user.id,
+        username=user.username or '',
+        first_name=user.first_name or '',
+        last_name=user.last_name or '',
+        lang=lang
+    )
     
     text = t('lang_selected', lang) + "\n\n" + t('step0_name_title', lang)
     await query.edit_message_text(text=text, parse_mode='HTML')
