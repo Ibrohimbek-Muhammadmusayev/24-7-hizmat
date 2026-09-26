@@ -164,7 +164,8 @@ class WorkerListView(generics.ListAPIView):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        queryset = User.objects.filter(role=User.Role.WORKER).prefetch_related(
+        # Faqat to'liq ro'yxatdan o'tgan ustalar ko'rsatiladi (Lidlar ko'rinmaydi)
+        queryset = User.objects.filter(role=User.Role.WORKER, is_registered=True).prefetch_related(
             'selected_positions', 'portfolio_items', 'received_reviews'
         ).select_related('region', 'category', 'position').order_by('-id')
         
@@ -216,7 +217,12 @@ class UserListView(generics.ListCreateAPIView):
     serializer_class = UserSerializer
 
     def get_queryset(self):
-        queryset = User.objects.all().prefetch_related('selected_positions').select_related('region', 'category', 'position').order_by('-id')
+        # "Foydalanuvchilar" bo'limida faqat to'liq ro'yxatdan o'tganlar (is_registered=True) yoki admin/xodimlar (is_staff/superuser) ko'rinadi
+        # Chala ro'yxatdan o'tganlar faqat "Lidlar" sahifasida ko'rinadi, aralashib ketmaydi.
+        queryset = User.objects.filter(
+            models.Q(is_registered=True) | models.Q(is_staff=True) | models.Q(is_superuser=True) | models.Q(role__in=[User.Role.ADMIN, User.Role.CALL_CENTER])
+        ).prefetch_related('selected_positions').select_related('region', 'category', 'position').order_by('-id')
+        
         role = self.request.query_params.get('role', None)
         search = self.request.query_params.get('search', None)
         has_telegram = self.request.query_params.get('has_telegram', None)
