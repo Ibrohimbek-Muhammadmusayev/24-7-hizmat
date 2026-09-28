@@ -3,8 +3,8 @@ from rest_framework.response import Response
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 
-from .models import WorkerLocation
-from .serializers import WorkerLocationSerializer
+from .models import Region, WorkerLocation
+from .serializers import RegionSerializer, WorkerLocationSerializer
 
 class UpdateLocationView(views.APIView):
     def post(self, request):
