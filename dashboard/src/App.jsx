@@ -172,6 +172,10 @@ export default function App() {
     setCurrentUser(null);
   };
 
+  const handleLogout = () => {
+    handleLogoutWithMessage(null);
+  };
+
   // Check if current view is Telegram WebApp (/app or #/app or ?view=webapp)
   const isWebAppMode = typeof window !== 'undefined' && (
     window.location.pathname.startsWith('/app') || 
