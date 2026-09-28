@@ -6,14 +6,22 @@ def dynamic_domain_view(request, *args, **kwargs):
     """
     Subdomain & Route Router:
     1. Agar host 'admin.*' bo'lsa yoki URL yo'li '/dashboard' bo'lsa -> React Admin Dashboard (index.html)
-    2. Agar URL yo'li '/app' yoki '/webapp' bo'lsa -> React Web App (index.html)
+    2. Agar URL yo'li '/app', '/webapp' yoki query param 'tg_id', 'view=webapp' bo'lsa -> React Web App (index.html)
     3. Aks holda asosiy domen (domain.uz / 127.0.0.1) -> Bosh sahifa (landing.html)
     """
     host = request.get_host().lower()
     path = request.path
+    query = request.META.get('QUERY_STRING', '')
 
-    # Subdomain (admin.domain.uz) yoki /dashboard/, /app/, /webapp/ yo'li bo'lsa
-    if host.startswith('admin.') or path.startswith('/dashboard') or path.startswith('/app') or path.startswith('/webapp'):
+    is_webapp = (
+        path.startswith('/app') or 
+        path.startswith('/webapp') or 
+        'view=webapp' in query or 
+        'tg_id=' in query
+    )
+    is_admin = host.startswith('admin.') or path.startswith('/dashboard')
+
+    if is_admin or is_webapp:
         return render(request, 'index.html')
     
     # Asosiy domen (bosh sahifa)

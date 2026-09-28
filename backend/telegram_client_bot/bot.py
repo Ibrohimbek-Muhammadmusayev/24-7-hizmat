@@ -632,7 +632,9 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     app_btn_list = []
     
     # Check if app URL is configured or generate local/domain WebApp URL with telegram_id
-    base_app_url = config.app_url.strip() if (config.app_url and config.app_url.strip()) else "http://localhost:3000/#/app"
+    base_app_url = config.app_url.strip() if (config.app_url and config.app_url.strip()) else "https://ishtop24.uz/app"
+    if not base_app_url.endswith('/app') and not base_app_url.endswith('/webapp'):
+        base_app_url = base_app_url.rstrip('/') + '/app'
     user_app_url = f"{base_app_url}?tg_id={update.effective_user.id}&role=CLIENT&lang={lang}"
     
     try:
