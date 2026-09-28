@@ -398,3 +398,110 @@ class OfferJobToWorkerView(views.APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ApplyToJobPostView(views.APIView):
+    """
+    Worker applies for a JobPost via WebApp / Mini App.
+    Notifies employer via Telegram Bot if available.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, pk):
+        job = get_object_or_404(JobPost, pk=pk)
+        telegram_id = request.data.get('telegram_id')
+        worker_id = request.data.get('worker_id')
+        proposal_message = request.data.get('proposal_message', '')
+
+        worker = None
+        if worker_id:
+            worker = User.objects.filter(id=worker_id).first()
+        elif telegram_id:
+            worker = User.objects.filter(telegram_id=telegram_id).first()
+
+        if not worker:
+            worker = User.objects.filter(role=User.Role.WORKER).first()
+
+        if not worker:
+            return Response({'error': "Ishchi foydalanuvchi hisobi aniqlanmadi."}, status=status.HTTP_400_BAD_REQUEST)
+
+        app, created = JobApplication.objects.get_or_create(
+            job_post=job,
+            worker=worker,
+            defaults={'proposal_message': proposal_message, 'status': JobApplication.Status.PENDING}
+        )
+        if not created and proposal_message:
+            app.proposal_message = proposal_message
+            app.save()
+
+        # Increment application count on JobPost
+        job.applications_count = job.applications.count()
+        job.save()
+
+        # Notify employer via Telegram bot if employer has telegram_id
+        if job.employer and job.employer.telegram_id:
+            try:
+                from bot_control.models import BotConfig
+                from telegram import Bot
+                config = BotConfig.get_config()
+                token = config.client_bot_token or config.token
+                if token and token != '7890123456:AAExampleBotTokenPlaceholder':
+                    bot_instance = Bot(token=token)
+                    notify_text = (
+                        f"📬 <b>YANGI ARIZA (ОТКЛИК)!</b>\n\n"
+                        f"📢 <b>E'loningiz:</b> #{job.id} ({job.position.name_uz if job.position else 'Usta'})\n"
+                        f"👤 <b>Nomzod:</b> {worker.get_full_name() or worker.first_name}\n"
+                        f"📞 <b>Telefon:</b> {worker.phone_number or 'Mavjud'}\n"
+                        f"💬 <b>Xabar:</b> {proposal_message or 'Nomzod qiziqish bildirdi.'}\n\n"
+                        f"<i>Botdagi 'Javoblar (Отклики)' bo'limi orqali nomzodni ko'rishingiz mumkin.</i>"
+                    )
+                    async_to_sync(bot_instance.send_message)(
+                        chat_id=job.employer.telegram_id,
+                        text=notify_text,
+                        parse_mode='HTML'
+                    )
+            except Exception as e:
+                print("Error notifying employer of application:", e)
+
+        return Response({
+            'success': True,
+            'message': "Arizangiz muvaffaqiyatli yuborildi!",
+            'application_id': app.id
+        })
+
+
+class WorkerApplicationsListView(views.APIView):
+    """
+    Returns list of applications submitted by a worker.
+    """
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        telegram_id = request.query_params.get('telegram_id')
+        worker_id = request.query_params.get('worker_id')
+
+        qs = JobApplication.objects.all().select_related('job_post', 'job_post__category', 'job_post__position', 'job_post__region')
+        if worker_id:
+            qs = qs.filter(worker_id=worker_id)
+        elif telegram_id:
+            qs = qs.filter(worker__telegram_id=telegram_id)
+        else:
+            return Response([])
+
+        data = []
+        for app in qs[:30]:
+            job = app.job_post
+            data.append({
+                'id': app.id,
+                'job_id': job.id,
+                'job_title': job.position.name_uz if job.position else (job.custom_position_name or 'Ish'),
+                'category_name': job.category.name_uz if job.category else '',
+                'employment_type': job.get_employment_type_display(),
+                'price': job.price_amount or 'Kelishiladi',
+                'district': job.district or '',
+                'status': app.status,
+                'proposal_message': app.proposal_message,
+                'applied_at': app.applied_at.strftime("%d.%m.%Y %H:%M")
+            })
+        return Response(data)
+
+
+

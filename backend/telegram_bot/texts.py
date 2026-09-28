@@ -60,6 +60,7 @@ TEXTS = {
         'status_busy_badge': "🔴 <b>Holat:</b> Band (Yangi ishlar to'xtatilgan)",
         
         # 1. ISHLARNI KO'RISH / QIDIRISH
+        'btn_menu_open_app': "📱 ILOVADA KO'RISH (WEB APP)",
         'btn_menu_jobs': "🔎 ISHLARNI KO'RISH / QIDIRISH",
         'jobs_menu_title': "🔎 <b>ISHLARNI QIDIRISH VA KO'RISH</b>\n\nQanday usulda ish qidirmoqchisiz?",
         'btn_jobs_matched': "📋 Barcha ishlar",
@@ -277,6 +278,7 @@ TEXTS = {
         'status_busy_badge': "🔴 <b>Ҳолат:</b> Банд (Янги ишлар тўхтатилган)",
         
         # 1. ISHLARNI KO'RISH / QIDIRISH
+        'btn_menu_open_app': "📱 ИЛОВАДА КЎРИШ (WEB APP)",
         'btn_menu_jobs': "🔎 ИШЛАРНИ КЎРИШ / ҚИДИРИШ",
         'jobs_menu_title': "🔎 <b>ИШЛАРНИ ҚИДИРИШ ВА КЎРИШ</b>\n\nҚандай усулда иш қидирмоқчисиз?",
         'btn_jobs_matched': "📋 Барча ишлар",
@@ -493,6 +495,7 @@ TEXTS = {
         'status_busy_badge': "🔴 <b>Статус:</b> Занят (Новые заказы приостановлены)",
         
         # 1. ISHLARNI KO'RISH / QIDIRISH
+        'btn_menu_open_app': "📱 ОТКРЫТЬ ПРИЛОЖЕНИЕ (WEB APP)",
         'btn_menu_jobs': "🔎 ПРОСМОТР / ПОИСК ЗАКАЗОВ",
         'jobs_menu_title': "🔎 <b>ПОИСК И ПРОСМОТР ЗАКАЗОВ</b>\n\nКак вы хотите искать работу?",
         'btn_jobs_matched': "📋 Все заказы",
@@ -692,6 +695,7 @@ TEXTS = {
         'status_busy_badge': "🔴 <b>Status:</b> Busy (Orders paused)",
         
         # 1. ISHLARNI KO'RISH / QIDIRISH
+        'btn_menu_open_app': "📱 OPEN APP (WEB APP)",
         'btn_menu_jobs': "🔎 VIEW & SEARCH JOBS",
         'jobs_menu_title': "🔎 <b>SEARCH & VIEW JOBS</b>\n\nHow would you like to search for jobs?",
         'btn_jobs_matched': "📋 All Jobs",

@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     OrderListCreateView, OrderDetailView, DispatchOrderView, UpdateOrderStatusView, 
     WorkerJobHistoryView, OrderStatsView, JobPostListCreateView, JobPostDetailView, 
-    OfferJobToWorkerView
+    OfferJobToWorkerView, ApplyToJobPostView, WorkerApplicationsListView
 )
 
 urlpatterns = [
@@ -17,5 +17,7 @@ urlpatterns = [
     path('job-posts/', JobPostListCreateView.as_view(), name='job-post-list-create'),
     path('job-posts/<int:pk>/', JobPostDetailView.as_view(), name='job-post-detail'),
     path('job-posts/<int:pk>/offer/', OfferJobToWorkerView.as_view(), name='job-post-offer'),
+    path('job-posts/<int:pk>/apply/', ApplyToJobPostView.as_view(), name='job-post-apply'),
+    path('my-applications/', WorkerApplicationsListView.as_view(), name='worker-applications-list'),
 ]
 

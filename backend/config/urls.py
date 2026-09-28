@@ -4,16 +4,16 @@ from django.shortcuts import render
 
 def dynamic_domain_view(request, *args, **kwargs):
     """
-    Subdomain Router:
-    1. Agar host 'admin.*' bo'lsa -> React Admin Dashboard (index.html)
-    2. Agar URL yo'li '/dashboard/' bo'lsa -> React Admin Dashboard (index.html)
+    Subdomain & Route Router:
+    1. Agar host 'admin.*' bo'lsa yoki URL yo'li '/dashboard' bo'lsa -> React Admin Dashboard (index.html)
+    2. Agar URL yo'li '/app' yoki '/webapp' bo'lsa -> React Web App (index.html)
     3. Aks holda asosiy domen (domain.uz / 127.0.0.1) -> Bosh sahifa (landing.html)
     """
     host = request.get_host().lower()
     path = request.path
 
-    # Subdomain (admin.domain.uz) yoki /dashboard/ yo'li bo'lsa
-    if host.startswith('admin.') or path.startswith('/dashboard'):
+    # Subdomain (admin.domain.uz) yoki /dashboard/, /app/, /webapp/ yo'li bo'lsa
+    if host.startswith('admin.') or path.startswith('/dashboard') or path.startswith('/app') or path.startswith('/webapp'):
         return render(request, 'index.html')
     
     # Asosiy domen (bosh sahifa)

@@ -1,0 +1,394 @@
+/* =========================================================
+   TELEGRAM WEB APP & MINI APP DEDICATED STYLES
+   ========================================================= */
+
+.webapp-root {
+  min-height: 100vh;
+  background-color: #030712;
+  color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  user-select: none;
+  padding-bottom: 5.5rem;
+}
+
+.webapp-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.85rem;
+}
+
+.webapp-header-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.webapp-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.webapp-logo-badge {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: 0.9rem;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+  flex-shrink: 0;
+}
+
+.webapp-title-group h1 {
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.1;
+}
+
+.webapp-badge-pill {
+  font-size: 0.65rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  display: inline-block;
+  margin-left: 0.35rem;
+}
+
+.webapp-main {
+  max-width: 760px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 1rem;
+  flex: 1;
+}
+
+/* Search Box & Filters */
+.webapp-search-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 0.9rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  margin-bottom: 1rem;
+}
+
+.webapp-search-input-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.webapp-search-input-wrap svg {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  width: 16px;
+  height: 16px;
+}
+
+.webapp-search-input {
+  width: 100%;
+  background: #090d16;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 0.65rem 1rem 0.65rem 2.4rem;
+  font-size: 0.88rem;
+  color: #fff;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.webapp-search-input:focus {
+  border-color: #3b82f6;
+}
+
+.webapp-filter-pills {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.35rem;
+  scrollbar-width: none;
+}
+.webapp-filter-pills::-webkit-scrollbar {
+  display: none;
+}
+
+.webapp-pill-btn {
+  padding: 0.4rem 0.9rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.webapp-pill-btn.active-primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #3b82f6;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+}
+
+.webapp-pill-btn.active-amber {
+  background: #f59e0b;
+  color: #030712;
+  border-color: #f59e0b;
+  font-weight: 800;
+}
+
+.webapp-pill-btn.active-indigo {
+  background: #6366f1;
+  color: #fff;
+  border-color: #818cf8;
+}
+
+/* Category Slider */
+.webapp-cats-slider {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-top: 0.6rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  scrollbar-width: none;
+}
+.webapp-cats-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.webapp-cat-chip {
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  color: #94a3b8;
+  background: transparent;
+  border: 1px solid transparent;
+  cursor: pointer;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s;
+}
+
+.webapp-cat-chip.active {
+  background: rgba(37, 99, 235, 0.2);
+  color: #60a5fa;
+  border-color: rgba(37, 99, 235, 0.4);
+  font-weight: 700;
+}
+
+/* Job Cards */
+.webapp-job-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 1.15rem;
+  margin-bottom: 0.85rem;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.webapp-job-card:hover {
+  border-color: rgba(59, 130, 246, 0.4);
+  transform: translateY(-2px);
+}
+
+.webapp-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 0.6rem;
+}
+
+.webapp-badge-daily {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.webapp-badge-permanent {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, 0.15);
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.webapp-job-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: #fff;
+  margin-top: 0.2rem;
+  line-height: 1.3;
+}
+
+.webapp-job-price {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #10b981;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.webapp-job-desc {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin-bottom: 0.85rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.webapp-job-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 0.75rem;
+  font-size: 0.76rem;
+}
+
+.webapp-apply-btn {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.78rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: all 0.2s;
+}
+
+.webapp-apply-btn:hover {
+  background: linear-gradient(135deg, #047857, #059669);
+  transform: translateY(-1px);
+}
+
+/* Native App Bottom Navbar */
+.webapp-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.5rem 0.75rem;
+}
+
+.webapp-bottom-nav-inner {
+  max-width: 500px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.25rem;
+}
+
+.webapp-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0;
+  border-radius: 12px;
+  color: #94a3b8;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.webapp-nav-item svg {
+  width: 20px;
+  height: 20px;
+  margin-bottom: 0.15rem;
+}
+
+.webapp-nav-item span {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.webapp-nav-item.active {
+  color: #3b82f6;
+  font-weight: 800;
+}
+
+.webapp-nav-item.active-post {
+  color: #10b981;
+  font-weight: 800;
+}
+
+/* Modals */
+.webapp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.webapp-modal-sheet {
+  background: #0f172a;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  width: 100%;
+  max-width: 540px;
+  padding: 1.5rem;
+  box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 640px) {
+  .webapp-modal-overlay {
+    align-items: center;
+    padding: 1rem;
+  }
+  .webapp-modal-sheet {
+    border-radius: 20px;
+  }
+}

@@ -34,6 +34,7 @@ from telegram import (
     KeyboardButton,
     ReplyKeyboardMarkup,
     ReplyKeyboardRemove,
+    WebAppInfo,
 )
 from telegram.ext import (
     Application,
@@ -1622,7 +1623,20 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
     apps_count = len(apps)
     apps_badge = f" ({apps_count})" if apps_count > 0 else ""
     
+    config = await sync_to_async(BotConfig.get_config)()
+    app_btn_list = []
+    
+    # Check if app URL is configured or generate local/domain WebApp URL with telegram_id
+    base_app_url = config.app_url.strip() if (config.app_url and config.app_url.strip()) else "http://localhost:3000/#/app"
+    user_app_url = f"{base_app_url}?tg_id={user_id}&role=WORKER&lang={lang}"
+    
+    try:
+        app_btn_list.append(InlineKeyboardButton(t('btn_menu_open_app', lang), web_app=WebAppInfo(url=user_app_url)))
+    except Exception:
+        app_btn_list.append(InlineKeyboardButton(t('btn_menu_open_app', lang), url=user_app_url))
+        
     keyboard = [
+        app_btn_list,
         [InlineKeyboardButton(t('btn_menu_jobs', lang), callback_data="menu_jobs")],
         [
             InlineKeyboardButton(t('btn_menu_profile', lang), callback_data="menu_profile"),

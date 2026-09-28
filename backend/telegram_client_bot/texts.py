@@ -12,6 +12,7 @@ TEXTS = {
 
         # 0.3 Asosiy Menyu
         'main_menu': '🏢 <b>ISH BERUVCHI BOSHQARUV MARKAZI</b>\n\n👤 <b>Ish beruvchi:</b> {name}\n📞 <b>Tel:</b> {phone}\n📊 <b>Faol e\'lonlar:</b> {active_posts_count} ta\n\nKerakli bo\'limni tanlang:',
+        'btn_menu_open_app': "📱 ILOVADA KO'RISH (WEB APP)",
         'btn_menu_new_post': '➕ Yangi e\'lon',
         'btn_menu_my_posts': '📑 E\'lonlarim',
         'btn_menu_applications': '👥 Javoblar (Отклики)',
@@ -129,6 +130,7 @@ TEXTS = {
 
         # 0.3 Asosiy Menyu
         'main_menu': '🏢 <b>ИШ БЕРУВЧИ БОШҚАРУВ МАРКАЗИ</b>\n\n👤 <b>Иш берувчи:</b> {name}\n📞 <b>Тел:</b> {phone}\n📊 <b>Фаол э\'лонлар:</b> {active_posts_count} та\n\nКеракли бўлимни танланг:',
+        'btn_menu_open_app': "📱 ИЛОВАДА КЎРИШ (WEB APP)",
         'btn_menu_new_post': '➕ Янги э\'лон',
         'btn_menu_my_posts': '📑 Э\'лонларим',
         'btn_menu_applications': '👥 Жавоблар (Отклики)',
@@ -230,6 +232,7 @@ TEXTS = {
 
         # 0.3 Asosiy Menyu
         'main_menu': '🏢 <b>ЦЕНТР УПРАВЛЕНИЯ РАБОТОДАТЕЛЯ</b>\n\n👤 <b>Работодатель:</b> {name}\n📞 <b>Тел:</b> {phone}\n📊 <b>Активные вакансии:</b> {active_posts_count} шт.\n\nВыберите нужный раздел:',
+        'btn_menu_open_app': "📱 ОТКРЫТЬ ПРИЛОЖЕНИЕ (WEB APP)",
         'btn_menu_new_post': '➕ Разместить',
         'btn_menu_my_posts': '📑 Мои вакансии',
         'btn_menu_applications': '👥 Отклики',
@@ -331,6 +334,7 @@ TEXTS = {
 
         # 0.3 Asosiy Menyu
         'main_menu': '🏢 <b>EMPLOYER DASHBOARD</b>\n\n👤 <b>Employer:</b> {name}\n📞 <b>Phone:</b> {phone}\n📊 <b>Active Job Posts:</b> {active_posts_count}\n\nSelect an option:',
+        'btn_menu_open_app': "📱 OPEN APP (WEB APP)",
         'btn_menu_new_post': '➕ Post Job',
         'btn_menu_my_posts': '📑 My Posts',
         'btn_menu_applications': '👥 Applications',

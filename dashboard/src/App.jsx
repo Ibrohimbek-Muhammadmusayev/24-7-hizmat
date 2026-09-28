@@ -16,7 +16,8 @@ import CreateOrderModal from './components/CreateOrderModal';
 import LoginModal from './components/LoginModal';
 import SettingsManager from './components/SettingsManager';
 import LeadsManager from './components/LeadsManager';
-import { Sun, Moon, RotateCw, LogOut, ShieldCheck, Headphones, User, Menu, Crown } from 'lucide-react';
+import TelegramWebApp from './components/TelegramWebApp';
+import { Sun, Moon, RotateCw, LogOut, ShieldCheck, Headphones, User, Menu, Crown, Smartphone } from 'lucide-react';
 
 import { fetchOrders, fetchWorkers, fetchLiveLocations, fetchOrderStats, fetchCategories, fetchJobPosts, fetchUsers } from './services/api';
 
@@ -171,9 +172,18 @@ export default function App() {
     setCurrentUser(null);
   };
 
-  const handleLogout = () => {
-    handleLogoutWithMessage(null);
-  };
+  // Check if current view is Telegram WebApp (/app or #/app or ?view=webapp)
+  const isWebAppMode = typeof window !== 'undefined' && (
+    window.location.pathname.startsWith('/app') || 
+    window.location.pathname.startsWith('/webapp') || 
+    window.location.hash.includes('/app') || 
+    window.location.search.includes('view=webapp') ||
+    window.location.search.includes('tg_id')
+  );
+
+  if (isWebAppMode) {
+    return <TelegramWebApp />;
+  }
 
   if (!currentUser) {
     return (
@@ -245,6 +255,17 @@ export default function App() {
 
           <div className="header-actions">
             {/* Theme Toggle Button */}
+            <a 
+              href="/app"
+              target="_blank"
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', textDecoration: 'none', background: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)', color: '#34d399' }}
+              title="Web App / Mini App ko'rinishini ochish"
+            >
+              <Smartphone size={15} />
+              <span className="btn-text-hide-mobile">Web App</span>
+            </a>
+
             <button 
               className="theme-toggle-btn"
               onClick={toggleTheme}

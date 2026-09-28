@@ -76,6 +76,8 @@ export const createJobPost = (data) => api.post('/orders/job-posts/', data);
 export const updateJobPost = (id, data) => api.patch(`/orders/job-posts/${id}/`, data);
 export const deleteJobPost = (id) => api.delete(`/orders/job-posts/${id}/`);
 export const offerJobToWorker = (jobId, workerId) => api.post(`/orders/job-posts/${jobId}/offer/`, { worker_id: workerId });
+export const applyToJobPost = (jobId, data) => api.post(`/orders/job-posts/${jobId}/apply/`, data);
+export const fetchWorkerApplications = (params = {}) => api.get('/orders/my-applications/', { params });
 
 
 // Accounts & Workers
@@ -113,6 +115,12 @@ export const sendBroadcast = (target, text) => api.post('/bot/broadcast/', { tar
 export const fetchLeads = (params = {}) => api.get('/accounts/leads/', { params });
 export const sendLeadReminder = (data) => api.post('/accounts/leads/send-reminder/', data);
 export const deleteLead = (id) => api.delete(`/accounts/leads/${id}/`);
+
+// WebApp & Public Portal APIs
+export const telegramWebAppAuth = (authData) => api.post('/accounts/webapp-auth/', authData);
+export const fetchPublicStats = () => api.get('/accounts/public-stats/');
+export const webAppToggleBusy = (data) => api.post('/accounts/webapp-toggle-busy/', data);
+export const webAppUpdateProfile = (data) => api.post('/accounts/webapp-update-profile/', data);
 
 export default api;
 

@@ -17,7 +17,11 @@ from .views import (
     UserFeedbackDetailView,
     LeadsListView,
     SendLeadReminderView,
-    DeleteLeadView
+    DeleteLeadView,
+    TelegramWebAppAuthView,
+    PublicPlatformStatsView,
+    WebAppToggleBusyView,
+    WebAppUpdateProfileView
 )
 
 urlpatterns = [
@@ -39,6 +43,10 @@ urlpatterns = [
     path('leads/', LeadsListView.as_view(), name='leads-list'),
     path('leads/send-reminder/', SendLeadReminderView.as_view(), name='leads-send-reminder'),
     path('leads/<int:pk>/', DeleteLeadView.as_view(), name='lead-delete'),
+    path('webapp-auth/', TelegramWebAppAuthView.as_view(), name='webapp-auth'),
+    path('public-stats/', PublicPlatformStatsView.as_view(), name='public-stats'),
+    path('webapp-toggle-busy/', WebAppToggleBusyView.as_view(), name='webapp-toggle-busy'),
+    path('webapp-update-profile/', WebAppUpdateProfileView.as_view(), name='webapp-update-profile'),
 ]
 
 
