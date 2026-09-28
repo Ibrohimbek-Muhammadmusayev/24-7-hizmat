@@ -46,3 +46,8 @@ class LiveWorkerLocationsView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = WorkerLocationSerializer
     queryset = WorkerLocation.objects.filter(worker__is_online=True)
+
+class RegionListView(generics.ListAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = RegionSerializer
+    queryset = Region.objects.filter(is_active=True).order_by('order', 'id')

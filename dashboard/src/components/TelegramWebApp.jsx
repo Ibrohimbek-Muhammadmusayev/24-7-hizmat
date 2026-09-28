@@ -278,7 +278,12 @@ export default function TelegramWebApp() {
       setJobs(jobsRes.data || []);
 
       if (currentUser) {
-        const myPosts = (jobsRes.data || []).filter(j => j.employer && j.employer.id === currentUser.id);
+        const myPosts = (jobsRes.data || []).filter(j => {
+          if (!j.employer) return false;
+          if (j.employer === currentUser.id || j.employer.id === currentUser.id) return true;
+          if (j.employer_detail && (j.employer_detail.id === currentUser.id || (currentUser.telegram_id && j.employer_detail.telegram_id === currentUser.telegram_id))) return true;
+          return false;
+        });
         setMyCreatedPosts(myPosts);
       }
     } catch (e) {
@@ -537,6 +542,11 @@ export default function TelegramWebApp() {
     try {
       await createJobPost({
         ...postForm,
+        employer: currentUser?.id,
+        employer_id: currentUser?.id,
+        telegram_id: currentUser?.telegram_id,
+        contact_name: postForm.contact_name || currentUser?.first_name || '',
+        contact_phone: postForm.contact_phone || currentUser?.phone_number || '',
         category: postForm.category_id ? parseInt(postForm.category_id, 10) : null,
         price_amount: postForm.price_amount ? parseFloat(postForm.price_amount) : null
       });
@@ -1427,15 +1437,88 @@ export default function TelegramWebApp() {
                 />
               </div>
 
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>⚧ Jinsi</label>
+                  <select 
+                    value={editForm.gender}
+                    onChange={(e) => setEditForm({ ...editForm, gender: e.target.value })}
+                    style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
+                  >
+                    <option value="male">Erkak</option>
+                    <option value="female">Ayol</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>🎂 Yoshi</label>
+                  <input 
+                    type="number"
+                    min="14"
+                    max="100"
+                    value={editForm.age}
+                    onChange={(e) => setEditForm({ ...editForm, age: e.target.value })}
+                    placeholder="25"
+                    style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
+                  />
+                </div>
+              </div>
+
               <div>
-                <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>{t('district_label')}</label>
+                <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>📍 {t('district_label')}</label>
                 <input 
                   type="text"
                   value={editForm.district}
                   onChange={(e) => setEditForm({ ...editForm, district: e.target.value })}
+                  placeholder="Tuman, shahar, ko'cha nomi"
                   style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
                 />
               </div>
+
+              {userRoleMode === 'WORKER' && (
+                <>
+                  <div>
+                    <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>🛠 Asosiy soha</label>
+                    <select 
+                      value={editForm.category_id}
+                      onChange={(e) => setEditForm({ ...editForm, category_id: e.target.value })}
+                      style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
+                    >
+                      <option value="">Sohani tanlang</option>
+                      {categories.map(c => (
+                        <option key={c.id} value={c.id}>{c.icon} {getCategoryName(c)}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>⚡️ Bandlik turi</label>
+                      <select 
+                        value={editForm.employment_type}
+                        onChange={(e) => setEditForm({ ...editForm, employment_type: e.target.value })}
+                        style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
+                      >
+                        <option value="both">Kunbay & Doimiy</option>
+                        <option value="daily">Bir martalik (Kunbay)</option>
+                        <option value="permanent">Doimiy ish</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>⏱ Ish vaqti</label>
+                      <select 
+                        value={editForm.work_schedule}
+                        onChange={(e) => setEditForm({ ...editForm, work_schedule: e.target.value })}
+                        style={{ width: '100%', background: '#090d16', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 10, padding: '0.6rem', color: '#fff', outline: 'none' }}
+                      >
+                        <option value="24_7">24/7 (Istalgan vaqtda)</option>
+                        <option value="day_shift">09:00 - 18:00 (Kunduzgi)</option>
+                        <option value="flexible">Erkin grafik</option>
+                      </select>
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div>
                 <label style={{ display: 'block', fontWeight: 700, color: '#cbd5e1', marginBottom: '0.25rem' }}>{t('app_language')}</label>

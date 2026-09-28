@@ -758,8 +758,30 @@ class WebAppUpdateProfileView(views.APIView):
             user.first_name = request.data.get('first_name', '').strip()
         if 'phone_number' in request.data:
             user.phone_number = request.data.get('phone_number', '').strip()
+        if 'gender' in request.data and request.data.get('gender') in ['male', 'female']:
+            user.gender = request.data.get('gender')
+        if 'age' in request.data and request.data.get('age'):
+            try:
+                user.age = int(request.data.get('age'))
+            except (ValueError, TypeError):
+                pass
+        if 'region_id' in request.data and request.data.get('region_id'):
+            user.region_id = request.data.get('region_id')
         if 'district' in request.data:
             user.district = request.data.get('district', '').strip()
+        if 'category_id' in request.data and request.data.get('category_id'):
+            user.category_id = request.data.get('category_id')
+        if 'position_id' in request.data and request.data.get('position_id'):
+            user.position_id = request.data.get('position_id')
+            user.selected_positions.set([request.data.get('position_id')])
+        if 'selected_positions' in request.data and isinstance(request.data.get('selected_positions'), list):
+            user.selected_positions.set(request.data.get('selected_positions'))
+        if 'custom_position' in request.data:
+            user.custom_position = request.data.get('custom_position', '').strip()
+        if 'employment_type' in request.data and request.data.get('employment_type') in [User.EmploymentType.DAILY, User.EmploymentType.PERMANENT, User.EmploymentType.BOTH]:
+            user.employment_type = request.data.get('employment_type')
+        if 'work_schedule' in request.data and request.data.get('work_schedule') in [User.WorkSchedule.DAY_SHIFT, User.WorkSchedule.FULL_TIME_24_7, User.WorkSchedule.FLEXIBLE]:
+            user.work_schedule = request.data.get('work_schedule')
         if 'language' in request.data:
             user.language = request.data.get('language', 'uz')
         if 'latitude' in request.data and request.data.get('latitude') is not None:

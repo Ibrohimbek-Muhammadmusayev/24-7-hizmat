@@ -116,6 +116,9 @@ export const fetchLeads = (params = {}) => api.get('/accounts/leads/', { params 
 export const sendLeadReminder = (data) => api.post('/accounts/leads/send-reminder/', data);
 export const deleteLead = (id) => api.delete(`/accounts/leads/${id}/`);
 
+// Regions & Locations
+export const fetchRegions = () => api.get('/locations/regions/');
+
 // WebApp & Public Portal APIs
 export const telegramWebAppAuth = (authData) => api.post('/accounts/webapp-auth/', authData);
 export const fetchPublicStats = () => api.get('/accounts/public-stats/');

@@ -329,8 +329,20 @@ class JobPostListCreateView(generics.ListCreateAPIView):
         return qs
 
     def perform_create(self, serializer):
-        # Agar admin yaratayotgan bo'lsa va employer ko'rsatilmagan bo'lsa
-        employer = self.request.user if self.request.user.is_authenticated else User.objects.filter(role=User.Role.ADMIN).first()
+        employer = None
+        employer_id = self.request.data.get('employer_id') or self.request.data.get('employer')
+        telegram_id = self.request.data.get('telegram_id')
+
+        if employer_id:
+            employer = User.objects.filter(id=employer_id).first()
+        elif telegram_id:
+            employer = User.objects.filter(telegram_id=telegram_id).first()
+        elif self.request.user and self.request.user.is_authenticated:
+            employer = self.request.user
+        
+        if not employer:
+            employer = User.objects.filter(role=User.Role.CLIENT).first() or User.objects.filter(role=User.Role.ADMIN).first()
+            
         serializer.save(employer=employer)
 
 
