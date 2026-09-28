@@ -492,9 +492,9 @@ class WorkerApplicationsListView(views.APIView):
 
         qs = JobApplication.objects.all().select_related('job_post', 'job_post__category', 'job_post__position', 'job_post__region')
         if worker_id:
-            qs = qs.filter(worker_id=worker_id)
+            qs = qs.filter(worker_id=worker_id).exclude(job_post__employer_id=worker_id)
         elif telegram_id:
-            qs = qs.filter(worker__telegram_id=telegram_id)
+            qs = qs.filter(worker__telegram_id=telegram_id).exclude(job_post__employer__telegram_id=telegram_id)
         else:
             return Response([])
 

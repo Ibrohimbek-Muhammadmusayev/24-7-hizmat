@@ -787,6 +787,7 @@ def get_worker_applications(telegram_id: int):
         return []
     return list(
         JobApplication.objects.filter(worker=user, is_deleted_by_worker=False)
+        .exclude(job_post__employer=user)
         .select_related('job_post', 'job_post__employer', 'job_post__position', 'job_post__category', 'job_post__region')
         .order_by('-applied_at')[:50]
     )

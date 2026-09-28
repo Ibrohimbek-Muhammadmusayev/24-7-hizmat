@@ -54,12 +54,20 @@ async def notify_matching_workers_about_job(job_post_id):
 
     def get_target_workers():
         # Faqat ro'yxatdan o'tgan, telegram_id si bor, band bo'lmagan va bildirishnomani o'chirmagan ishchilar
+        # MUHIM: E'lon bergan ish beruvchining o'zini istisno qilish (o'ziga o'zi taklif bo'lib tushmasligi uchun)
         base_qs = User.objects.filter(
             role=User.Role.WORKER, 
             telegram_id__isnull=False, 
             is_registered=True,
             is_busy=False
-        ).exclude(notification_setting='off').prefetch_related('selected_positions')
+        ).exclude(notification_setting='off')
+        
+        if job.employer_id:
+            base_qs = base_qs.exclude(id=job.employer_id)
+        if job.employer and job.employer.telegram_id:
+            base_qs = base_qs.exclude(telegram_id=job.employer.telegram_id)
+            
+        base_qs = base_qs.prefetch_related('selected_positions')
 
         matched_worker_ids = set()
 
