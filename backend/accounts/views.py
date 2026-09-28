@@ -642,15 +642,34 @@ class TelegramWebAppAuthView(views.APIView):
         user = User.objects.filter(telegram_id=telegram_id).first()
 
         if not user:
-            # Safe auto-register if not yet created
+            # Safe auto-register as lead if not yet created in DB
+            is_client = (role == User.Role.CLIENT)
             user = User.objects.create(
                 telegram_id=telegram_id,
-                username=username or f"tg_{telegram_id}",
+                username=username or (f"tg_client_{telegram_id}" if is_client else f"tg_{telegram_id}"),
                 first_name=first_name or f"User_{telegram_id}",
                 role=role if role in [User.Role.WORKER, User.Role.CLIENT] else User.Role.WORKER,
                 is_registered=False,
-                started_worker_bot=True
+                started_client_bot=is_client,
+                started_worker_bot=(not is_client)
             )
+        else:
+            # Update tracking if user opened from specific bot
+            update_fields = []
+            if role == User.Role.CLIENT and not user.started_client_bot:
+                user.started_client_bot = True
+                update_fields.append('started_client_bot')
+            elif role == User.Role.WORKER and not user.started_worker_bot:
+                user.started_worker_bot = True
+                update_fields.append('started_worker_bot')
+            if first_name and not user.first_name:
+                user.first_name = first_name
+                update_fields.append('first_name')
+            if username and not user.username:
+                user.username = username
+                update_fields.append('username')
+            if update_fields:
+                user.save(update_fields=update_fields)
 
         refresh = RefreshToken.for_user(user)
         return Response({

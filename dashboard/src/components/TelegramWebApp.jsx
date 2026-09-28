@@ -203,11 +203,24 @@ export default function TelegramWebApp() {
             setCurrentLang(normalizeLang(u.language));
           }
 
-          // Detect Hybrid: started both bots or role
-          const hybridCheck = (u.started_client_bot && u.started_worker_bot) || u.role === 'ADMIN';
-          setIsHybrid(hybridCheck);
+          // Detect Dual/Hybrid bot user: only users who actually registered or started both bots (or admins) can switch roles
+          const hasWorkerAccess = Boolean(u.started_worker_bot || u.role === 'WORKER' || u.role === 'ADMIN');
+          const hasClientAccess = Boolean(u.started_client_bot || u.role === 'CLIENT' || u.role === 'ADMIN');
+          const canSwitch = (hasWorkerAccess && hasClientAccess) || u.role === 'ADMIN';
+          setIsHybrid(canSwitch);
           
-          const activeRole = initialRole === 'CLIENT' ? 'CLIENT' : (u.role || 'WORKER');
+          // If user came via specific bot URL parameter, honor that role if allowed, otherwise pick their true role
+          let activeRole = 'WORKER';
+          if (initialRole === 'CLIENT' && hasClientAccess) {
+            activeRole = 'CLIENT';
+          } else if (initialRole === 'WORKER' && hasWorkerAccess) {
+            activeRole = 'WORKER';
+          } else if (hasClientAccess && !hasWorkerAccess) {
+            activeRole = 'CLIENT';
+          } else {
+            activeRole = 'WORKER';
+          }
+
           setUserRoleMode(activeRole);
           if (activeRole === 'CLIENT') {
             setActiveView('my_posts');
@@ -585,25 +598,27 @@ export default function TelegramWebApp() {
               </button>
             )}
 
-            {/* Role Switcher */}
-            <button 
-              onClick={() => toggleRoleMode(userRoleMode === 'WORKER' ? 'CLIENT' : 'WORKER')}
-              className="webapp-pill-btn"
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.25rem', 
-                fontSize: '0.72rem', 
-                padding: '0.3rem 0.55rem', 
-                color: '#93c5fd',
-                background: 'rgba(59, 130, 246, 0.12)',
-                borderColor: 'rgba(59, 130, 246, 0.25)'
-              }}
-              title="Rolni almashtirish"
-            >
-              <ArrowRightLeft size={11} />
-              <span>{userRoleMode === 'WORKER' ? t('switch_to_employer') : t('switch_to_worker')}</span>
-            </button>
+            {/* Role Switcher (Faqat ikkala botdan foydalangan foydalanuvchilar yoki adminlar uchun ko'rinadi) */}
+            {isHybrid && (
+              <button 
+                onClick={() => toggleRoleMode(userRoleMode === 'WORKER' ? 'CLIENT' : 'WORKER')}
+                className="webapp-pill-btn"
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.25rem', 
+                  fontSize: '0.72rem', 
+                  padding: '0.3rem 0.55rem', 
+                  color: '#93c5fd',
+                  background: 'rgba(59, 130, 246, 0.12)',
+                  borderColor: 'rgba(59, 130, 246, 0.25)'
+                }}
+                title="Rolni almashtirish"
+              >
+                <ArrowRightLeft size={11} />
+                <span>{userRoleMode === 'WORKER' ? t('switch_to_employer') : t('switch_to_worker')}</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
