@@ -310,7 +310,7 @@ class JobPostListCreateView(generics.ListCreateAPIView):
         qs = JobPost.objects.all().select_related('employer', 'category', 'position', 'region').prefetch_related('applications__worker').order_by('-created_at')
         status_param = self.request.query_params.get('status')
         if status_param:
-            qs = qs.filter(status=status_param)
+            qs = qs.filter(Q(status__iexact=status_param) | Q(status=status_param.lower()))
         category_param = self.request.query_params.get('category')
         if category_param:
             qs = qs.filter(category_id=category_param)

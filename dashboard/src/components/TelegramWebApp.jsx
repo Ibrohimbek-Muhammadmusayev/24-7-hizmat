@@ -272,7 +272,7 @@ export default function TelegramWebApp() {
     try {
       const [catsRes, jobsRes] = await Promise.all([
         fetchCategories(),
-        fetchJobPosts({ status: 'ACTIVE' })
+        fetchJobPosts({ status: 'active' })
       ]);
       setCategories(catsRes.data || []);
       setJobs(jobsRes.data || []);
