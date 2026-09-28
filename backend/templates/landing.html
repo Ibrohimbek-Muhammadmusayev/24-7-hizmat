@@ -3,12 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    // Agar sahifa Telegram WebApp ichida ochilgan bo'lsa yoki tg_id berilgan bo'lsa -> zudlik bilan Mini App (/app) ga yo'naltirish
+    (function() {
+      var search = window.location.search || '';
+      var hash = window.location.hash || '';
+      var isTgWebview = (typeof window !== 'undefined' && window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData && window.Telegram.WebApp.initData.length > 0);
+      var hasTgParam = search.indexOf('tg_id') !== -1 || hash.indexOf('tg_id') !== -1 || search.indexOf('view=webapp') !== -1 || hash.indexOf('view=webapp') !== -1;
+      
+      if (isTgWebview || hasTgParam) {
+        var query = search ? search : (hash.indexOf('?') !== -1 ? '?' + hash.split('?')[1] : '');
+        window.location.replace('/app' + query);
+      }
+    })();
+  </script>
   <title>IshBazari — O'zbekistonning Yetakchi Usta va Ish Platformasi</title>
   <meta name="description" content="Mijozlar uchun bir necha daqiqada professional usta topish, ustalar uchun esa 24/7 kafolatlangan ish va daromad platformasi." />
   
   <!-- Favicon & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
