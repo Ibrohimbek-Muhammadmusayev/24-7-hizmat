@@ -1132,6 +1132,21 @@ export default function TelegramWebApp() {
                   </span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ color: '#94a3b8' }}>{t('specialties_label')}:</span>
+                  <span style={{ fontWeight: 700, color: '#60a5fa', textAlign: 'right', maxWidth: '60%' }}>
+                    {currentUser?.selected_positions_details?.length > 0 
+                      ? currentUser.selected_positions_details.map(p => p[`name_${currentLang}`] || p.name_uz || p.name).join(', ')
+                      : (currentUser?.position_details ? (currentUser.position_details[`name_${currentLang}`] || currentUser.position_details.name_uz) : (currentUser?.custom_position || currentUser?.category_details?.[`name_${currentLang}`] || currentUser?.category_details?.name_uz || t('not_entered')))}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: '#94a3b8' }}>{t('work_schedule_label')}:</span>
+                  <span style={{ fontWeight: 700, color: '#fff' }}>
+                    {currentUser?.employment_type === 'daily' ? t('filter_daily') : (currentUser?.employment_type === 'permanent' ? t('filter_permanent') : `${t('filter_daily')} / ${t('filter_permanent')}`)}
+                    {currentUser?.work_schedule ? ` (${currentUser.work_schedule === '24_7' ? '24/7' : (currentUser.work_schedule === 'day_shift' ? 'Kunduzgi' : 'Erkin')})` : ''}
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <span style={{ color: '#94a3b8' }}>{t('app_language')}:</span>
                   <span style={{ fontWeight: 700, color: '#60a5fa' }}>
                     {currentLang === 'ru' ? "🇷🇺 Русский" : currentLang === 'oz' ? "🇺🇿 Ўзбекча (Кирилл)" : currentLang === 'en' ? "🇬🇧 English" : "🇺🇿 O'zbekcha (Lotin)"}
